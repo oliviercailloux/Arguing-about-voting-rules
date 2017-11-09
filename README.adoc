@@ -1,0 +1,4 @@
+= Arguing about Voting Rules
+
+Documents and presentations related to the article: Olivier Cailloux and Ulle Endriss. 2016. “Arguing about Voting Rules”. In http://www.ifaamas.org/Proceedings/aamas2016/forms/contents.htm#SC1[Proceedings] of the 15th International Conference on Autonomous Agents and Multiagent Systems (AAMAS-2016), IFAAMAS.
+
