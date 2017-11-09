@@ -1,0 +1,150 @@
+\RequirePackage[l2tabu, orthodox]{nag}
+\RequirePackage{silence}
+\WarningFilter{ifpdf}{Someone has redefined \pdfoutput}
+\WarningFilter{fmtcount}{\ordinal already defined use \FCordinal instead}
+\documentclass[english]{beamer}
+\input{preamble/packages}
+\input{preamble/math_basics}
+\input{preamble/math_mine}
+\input{preamble/redac}
+\input{preamble/draw}
+\input{preamble/acronyms}
+
+\setbeamertemplate{headline}[singleline]
+
+\definecolor{darkgreen}{rgb}{0,0.6,0}
+\newcommand{\highlight}[1]{\textcolor{darkgreen}{#1}}
+
+\title{Arguing about voting rules}
+\subject{Voting rules}
+\keywords{social choice}
+\author[Olivier Cailloux]{Olivier Cailloux \and Matias Nunez}
+\date{\formatdate{1}{12}{2016}}
+
+\begin{document}
+\bibliographystyle{apalike}
+
+\begin{frame}[plain]
+	\tikz[remember picture,overlay]{
+		\node[anchor=south west, inner sep=0] at (current page.south west) {
+			{\includegraphics[height=1cm]{LAMSADE95.jpg}}
+		};
+		\path (current page.south) node[anchor=south, inner sep=0] {
+			{\includegraphics[height=1cm]{Dauphine.jpg}}
+		};
+		\node[anchor=south east, inner sep=0] at (current page.south east) {
+			{\includegraphics[height=1cm]{illc_cropped}}
+		};
+	}
+   \titlepage
+\end{frame}
+\addtocounter{framenumber}{-1}
+
+\section{Goal}
+\begin{frame}
+	\frametitle{Goal}
+	
+	\begin{itemize}
+		\item Voting rule: a systematic way of aggregating different opinions and decide
+		\item Multiple reasonable ways of doing this
+	\end{itemize}
+	\begin{block}{Our goal}
+		We want to justify an election outcome by means of a sequence of simple arguments
+	\end{block}
+\end{frame}
+
+\section{Example}
+\begin{frame}
+	\frametitle{Example}
+	
+	\begin{block}{Who should win?}
+		\begin{center}
+			$\begin{array}{lc}
+				\text{Voter 1:} & a\succ b\succ c \\
+				\text{Voter 2:} & a\succ b\succ c \\
+				\text{Voter 3:} & c\succ b\succ a 
+			\end{array}$
+		\end{center}
+	\end{block}
+	\begin{itemize}
+		\item Veto rule chooses $b$
+		\item Borda rule chooses $a$
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\begin{center}
+		\fbox{%
+			$\begin{array}{lc}
+				\text{\textcolor{red}{Voter 1:}} & \textcolor{red}{a\succ b\succ c} \\
+				\highlight{\text{Voter 2:}} & \highlight{ a\succ b\succ c} \\
+				\highlight{\text{Voter 3:}} & \highlight{ c\succ b\succ a} 
+			\end{array}$%
+		}
+	\end{center}
+	
+	\begin{tabular}{@{}lp{6.8cm}r@{}}
+		\textbf{System:} & Take the \textcolor{red}{\textit{red subprofile}}. Here, \textcolor{red}{\textit{$a$ should win}}, right? & \textcolor{gray}{[unanimity]} \\
+		\textbf{User:} & Obviously! & \\
+		\textbf{System:} & Now consider the \emph{green subprofile}. For symmetry reasons, there should be a \emph{three-way tie}, right? & \textcolor{gray}{[cancellation]} \\
+		\textbf{User:} & Sounds reasonable. & \\
+		\textbf{System:} &  So, as there was a three-way tie for the green part, the red part should decide the overall winner, right? & \textcolor{gray}{[reinforcement]} \\
+		\textbf{User:} & Yes. \\
+		\textbf{System:} & To summarise, you agree that $a$ should win. 
+	\end{tabular}
+\end{frame}
+
+\section{Approach}
+\begin{frame}
+	\frametitle{Approach}
+	
+	\begin{itemize}
+		\item Translate axioms into propositional logic formulas
+		\item Build a general argumentation scheme by manipulating those formulas
+		\item In case of Borda: solve a simple system of equations to find intermediate profiles
+		\item Display a justification for the Borda winners from \emph{any} starting profile
+	\end{itemize}
+\end{frame}
+
+\section{Internship}
+\begin{frame}
+	\frametitle{Topic of the internship}
+	
+	\begin{itemize}
+		\item Programming: show a justification to a user
+		\item Integrate into \href{http://strokes.imag.fr/whale4/}{Whale4}
+		\item Research: develop other (simple) argumentation schemes
+		\item Find out interesting profiles automatically
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Further information}
+	\begin{block}{Contacts}
+		\begin{itemize}
+			\item \href{https://www.ent.dauphine.fr/Annuaire/index.php?param0=fiche&param1=ocailloux}{Olivier Cailloux} : \href{mailto:olivier.cailloux@dauphine.fr}{\nolinkurl{olivier.cailloux@dauphine.fr}}
+			\item \href{https://www.ent.dauphine.fr/Annuaire/index.php?param0=fiche&param1=manunez}{Matias Nunez} : \href{mailto:matias.nunez@dauphine.fr}{\nolinkurl{matias.nunez@dauphine.fr}}
+		\end{itemize}
+	\end{block}
+	\begin{block}{Bibliography}
+		Olivier Cailloux and Ulle Endriss. 2016. “Arguing about Voting Rules”. In Proceedings of the 15th International Conference on Autonomous Agents and Multiagent Systems (AAMAS-2016), IFAAMAS.
+		\url{http://www.lamsade.dauphine.fr/~ocailloux/\#publications}
+	\end{block}
+\end{frame}
+
+\begin{frame}[plain]
+	\addtocounter{framenumber}{-1}
+	\begin{center}
+		\huge
+		\textit{Thank you for your attention!}
+	\end{center}
+\end{frame}
+
+\begin{frame}[plain]
+	\addtocounter{framenumber}{-1}
+	\begin{center}
+		\includegraphics[width=\textwidth]{W2.png}
+	\end{center}
+\end{frame}
+
+\end{document}
