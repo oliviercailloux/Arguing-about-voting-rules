@@ -14,8 +14,8 @@
 \subject{Voting rules}
 \keywords{social choice}
 \author[Olivier Cailloux]{\emph{Olivier Cailloux} \inst{1} \and Ulle Endriss \inst{2}}
-\institute[Paris Dauphine]{\inst{1} LAMSADE, Paris Dauphine \and \inst{2} ILLC, University of Amsterdam}
-\date{\formatdate{16}{3}{2016}}
+\institute[LAMSADE]{\inst{1} LAMSADE, Paris Dauphine \and \inst{2} ILLC, University of Amsterdam}
+\date{\formatdate{14}{11}{2017}}
 
 \begin{document}
 \bibliographystyle{apalike}
@@ -30,6 +30,9 @@
 		};
 		\node[anchor=south east, inner sep=0] at (current page.south east) {
 			{\includegraphics[height=1cm]{illc_cropped}}
+		};
+		\path (current page.south) ++ (0, 4em) node[anchor=south, inner sep=0] {
+			\scriptsize\url{https://github.com/oliviercailloux/Arguing-about-voting-rules}
 		};
 	}
    \titlepage
@@ -52,6 +55,7 @@
 		\item Multiple reasonable ways of doing this
 		\item Different voting rules have different interesting properties
 		\item None satisfy all desirable properties
+		\item Some are more reasonable than others
 	\end{itemize}
 	\end{block}
 	\begin{block}{Our goal}
@@ -67,7 +71,7 @@
 		\item[Possible voters] $\allvoters = \set{1, 2, \ldots}$
 		\item[Voters] $\emptyset \subset \voters \subseteq \allvoters$
 %		\item[Linear orders on $A \subseteq \allalts$] $\linors$.
-		\item[Profile] partial function $\prof$ from $\allvoters$ to linear orders on $\allalts$.
+		\item[Profile] function $\prof$ from $\voters$ to linear orders on $\allalts$.
 		\item[Voting rule] function $f$ mapping each $\prof$ to winners $\emptyset \subset A \subseteq \allalts$.
 	\end{description}
 	\vfill
@@ -101,17 +105,12 @@
 \subsection{Two voting rules}
 \begin{frame}
 	\frametitle{Borda}
-	
-	\begin{itemize}
-		\item Jean-Charles de Borda, 1733–1799
-	\end{itemize}
 Given a profile $\prof$:
 	\begin{itemize}
 		\item count the score of each alternative;
 		\item the highest scores win.
 		\item Score of $a \in \allalts$ is the number of alternatives it beats.
 	\end{itemize}
-	\vspace{-0.7pt}
 	
 	\begin{equation}
 		\prof =
@@ -137,8 +136,6 @@ Given a profile $\prof$:
 
 \begin{frame}
 	\frametitle{Condorcet’s principle}
-	
-	An idea from Marie Jean Antoine Nicolas de Caritat, marquis de Condorcet (1743–1794).
 	\begin{block}{Condorcet’s principle}
 		We ought to take the Condorcet winner as sole winner if it exists.
 		\begin{itemize}
@@ -154,7 +151,7 @@ Given a profile $\prof$:
 			d	&	c	&	a\\
 			c	&	a	&	c\\
 			b	&	d	&	d
-		\end{array}.\text{ Who wins?}
+		\end{array}.\text{ Who wins?}\pause {b}
 	\end{equation}
 \end{frame}
 
@@ -194,18 +191,49 @@ Given a profile $\prof$:
 	\end{frame}
 }
 
-\section{Language}
-%\subsection{Preliminary example}
+\section{Two examples}
+\subsection{Natural language example}
 \begin{frame}
-	\frametitle{Example of axiom}
+	\frametitle{Example}
 	
+	\begin{block}{Who should win?}
+		\begin{center}
+			$\begin{array}{lc}
+				\text{Voter 1:} & a\succ b\succ c \\
+				\text{Voter 2:} & a\succ b\succ c \\
+				\text{Voter 3:} & c\succ b\succ a 
+			\end{array}$
+		\end{center}
+	\end{block}
 	\begin{itemize}
-		\item Dominance: if $a$ dominates $b$ in $\prof$, then $b$ may not win.
-		\item We want a language to express this kind of axioms.
+		\item Veto rule chooses $b$
+		\item Borda rule chooses $a$
 	\end{itemize}
 \end{frame}
 
-\subsection{Presentation}
+\begin{frame}
+	\begin{center}
+		\fbox{%
+			$\begin{array}{lc}
+				\text{\textcolor{red}{Voter 1:}} & \textcolor{red}{a\succ b\succ c} \\
+				\textcolor{darkgreen}{\text{Voter 2:}} & \textcolor{darkgreen}{ a\succ b\succ c} \\
+				\textcolor{darkgreen}{\text{Voter 3:}} & \textcolor{darkgreen}{ c\succ b\succ a} 
+			\end{array}$%
+		}
+	\end{center}
+	
+	\begin{tabular}{@{}lp{6.8cm}r@{}}
+		\textbf{System:} & Take the \textcolor{red}{\textit{red subprofile}}. Here, \textcolor{red}{\textit{$a$ should win}}, right? & \textcolor{gray}{[unanimity]} \\
+		\textbf{User:} & Obviously! & \\
+		\textbf{System:} & Now consider the \emph{green subprofile}. For symmetry reasons, there should be a \emph{three-way tie}, right? & \textcolor{gray}{[cancellation]} \\
+		\textbf{User:} & Sounds reasonable. & \\
+		\textbf{System:} &  So, as there was a three-way tie for the green part, the red part should decide the overall winner, right? & \textcolor{gray}{[reinforcement]} \\
+		\textbf{User:} & Yes. \\
+		\textbf{System:} & To summarise, you agree that $a$ should win. 
+	\end{tabular}
+\end{frame}
+
+\subsection{Logical example}
 \begin{frame}
 	\frametitle{Language}
 	
@@ -226,12 +254,16 @@ Given a profile $\prof$:
 \end{frame}
 
 \begin{frame}
-	\frametitle{L-axioms}
+	\frametitle{Dominance l-axiom}
 	
-	\begin{itemize}
-		\item Now: “translate” axioms into language-axioms.
-		\item An \emph{l-axiom} is a set of formulæ.
-	\end{itemize}
+	\begin{definition}[\laxiom{Dom}]
+		L-axiom \laxiom{Dom}: for each $\prof$,
+		\setlength\abovedisplayskip{1 ex}
+		\begin{equation}
+			\latoin[\prof][\powersetz{U_\prof}],
+		\end{equation}
+		with $U_\prof$ the set of alternatives in $\prof$ that are not dominated.
+	\end{definition}
 \end{frame}
 
 \begin{frame}
@@ -262,62 +294,6 @@ Given a profile $\prof$:
 		\end{array}$,
 		constraints? \pause None.
 	\end{example}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Shortcut notations}
-	
-	$\powersetz{\allalts}$ the set of subsets of $\allalts$, excluding the empty set.
-	\\[2 em]
-	Let $\alpha \subseteq \powersetz{\allalts}$ be a set of possible winning alternatives.
-	\begin{block}{Uni-profile clause}
-		$\latoin$ shortcut for:
-		\begin{equation}
-			\bigvee_{A \in \alpha} \lato.
-		\end{equation}
-		\begin{itemize}
-			\item Intuitive content.
-			\item Called a uni-profile clause.
-		\end{itemize}
-	\end{block}
-\end{frame}
-
-\subsection{L-axioms}
-\begin{frame}
-	\frametitle{Dominance l-axiom}
-	
-	\begin{definition}[\laxiom{Dom}]
-		L-axiom \laxiom{Dom}: for each $\prof$,
-		\setlength\abovedisplayskip{1 ex}
-		\begin{equation}
-			\latoin[\prof][\powersetz{U_\prof}],
-		\end{equation}
-		with $U_\prof$ the set of alternatives in $\prof$ that are not dominated.
-	\end{definition}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Domain knowledge}
-	
-	\begin{itemize}
-		\item We need some formulæ encoding the voting rule concept.
-		\item Define $\kappa$ as the set of all those formulæ.
-	\end{itemize}
-	\begin{block}{Domain knowledge $\kappa$}
-		\setlength\abovedisplayskip{1 ex}
-		\begin{enumerate}
-			\item a voting rule can’t select more than one set of winners:\\
-			for all $\prof$ and all $\emptyset \subset A ≠ B \subseteq \allalts$,
-			\begin{equation}
-				\lato[\prof][A] ∧ \lato[\prof][B] → \bot.
-			\end{equation}
-			\item a voting rule must select at least one set of winners:\\
-			for all $\prof$,
-			\begin{equation}
-				\latoin[\prof][\powersetz{\allalts}].
-			\end{equation}
-		\end{enumerate}
-	\end{block}
 \end{frame}
 
 \begin{frame}
@@ -376,112 +352,6 @@ Given a profile $\prof$:
 			(\lato[\prof_1][A_1] ∧ \lato[\prof_2][A_2]) → \lato[\prof_1 + \prof_2][A_1 \cap A_2].
 		\end{equation}
 	\end{definition}
-\end{frame}
-
-\begin{frame}[fragile]
-	\frametitle{Fishburn-against-Condorcet argument}
-	
-	\begin{minipage}{5.5cm}
-		\citet[p. 544]{fishburn_paradoxes_1974} argument against the Condorcet principle (see also \url{http://rangevoting.org/FishburnAntiC.html}).
-		\begin{block}{Condorcet winner}
-%		\setlength\abovedisplayskip{0 ex}
-%		\begin{equation}
-			$w \text{ VS } \mu, \mu \in \set{a, \ldots, h}\text{? }\uncover<2->{51/101}$
-%		\end{equation}
-		\end{block}
-	\end{minipage}%
-	\begin{minipage}{\columnwidth-5cm}
-		\small
-		\begin{equation}
-			\begin{array}{lrrrrrr}
-				&\multicolumn{6}{c}{\text{nb voters}}\\
-			\cmidrule{2-7}
-					&31	&19	&10	&10	&10	&21	\\
-			\midrule
-				1	&a	&a	&f	&g	&h	&h	\\
-				2	&b	&b	&w	&w	&w	&g	\\
-				3	&c	&c	&a	&a	&a	&f	\\
-				4	&d	&d	&h	&h	&f	&w	\\
-				5	&e	&e	&g	&f	&g	&a	\\
-				6	&w	&f	&e	&e	&e	&e	\\
-				7	&g	&g	&d	&d	&d	&d	\\
-				8	&h	&h	&c	&c	&c	&c	\\
-				9	&f	&w	&b	&b	&b	&b	\\
-			\end{array}
-		\end{equation}
-	%	\begin{tikzpicture}
-	%		\path node[profile matrix] (profile) {
-	%				&31	&19	&10	&10	&10	&21	\\
-	%			1	&a	&a	&f	&g	&h	&h	\\
-	%			2	&b	&b	&w	&w	&w	&g	\\
-	%			3	&c	&c	&a	&a	&a	&f	\\
-	%			4	&d	&d	&h	&h	&f	&w	\\
-	%			5	&e	&e	&g	&f	&g	&a	\\
-	%			6	&w	&f	&e	&e	&e	&e	\\
-	%			7	&g	&g	&d	&d	&d	&d	\\
-	%			8	&h	&h	&c	&c	&c	&c	\\
-	%			9	&f	&w	&b	&b	&b	&b	\\
-	%		};
-	%	\end{tikzpicture}
-	%	BUT ranks:
-	\end{minipage}
-	\vspace{-1pt}
-	\onslide<3>
-	\begin{equation}
-		\vspace*{-8.4pt}
-		\begin{array}{lrrrrrrrrr}
-			&\multicolumn{9}{c}{\text{ranks}}\\
-		\cmidrule{2-10}
-			&1	&≤2	&≤3	&≤4	&≤5	&≤6	&≤7	&≤8	&≤9	\\
-		\midrule
-		w	&0	& 30	& 30	& 51	& 51	& 82	& 82	& 82	&101	\\
-		a	&50	& 50	& 80	& 80	& 101	& 101	& 101	&101	&101	\\
-		\end{array}
-	\end{equation}
-\end{frame}
-
-\begin{frame}[fragile]
-	\frametitle{Fishburn-versus-Condorcet l-axiom}
-	
-	Define $\prof_F$ the profile shown in the previous slide.
-	\begin{definition}[Fishburn-versus-Condorcet]
-		The Fishburn-versus-Condorcet l-axiom \laxiom{FvsC} is defined as:
-		\setlength\abovedisplayskip{1 ex}
-		\begin{equation}
-			\latoin[\prof_F][\powersetz{\allalts \setminus \set{w}}].
-		\end{equation}
-	\end{definition}
-\end{frame}
-
-\begin{frame}
-	\frametitle{L-axiomatization}
-	
-	An l-axiomatization is a set of l-axioms.
-	
-	\begin{definition}[Conforming to $J$]
-		The rule $f$ conforms to the l-axiomatization $J$ iff %$f$ conforms to all $j$ in $J$, iff $v_f$ satisfies all $j$, iff 
-		$v_f$ assigns the value $\ltru$ to all formulæ in $j$, for all $j \in J$.
-	\end{definition}
-	An l-axiomatization is consistent iff there exists a voting rule conformant to it.
-\end{frame}
-
-\subsection{Arguments}
-\begin{frame}
-	\frametitle{Arguments}
-	
-	\begin{definition}[Argument]
-		An argument grounded on $J$ is a pair $(\text{\emph{claim}}, \text{\emph{proof}})$,
-		\begin{itemize}
-			\item $J$ an l-axiomatization,
-			\item \emph{claim} a uni-profile clause (thus of the form $\latoin[\prof][\alpha]$),
-			\item \emph{proof} a natural deduction proof of the claim grounded on $J$.
-		\end{itemize}
-	\end{definition}
-	\begin{itemize}
-		\item The argument shows that for all voting rules $f$ conformant to $J$, $f(\prof)$ selects a set of winners among $\alpha$.
-		\item The argument claims that it is only reasonable to choose the winners among $\alpha$ for $\prof$ (provided $J$ is accepted).
-		\item \emph{Consistent} arguments require a consistent l-axiomatization.
-	\end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -554,47 +424,12 @@ Given a profile $\prof$:
 						c&a&c&a\\
 					\end{array}
 	$.
-\begin{enumerate}
-	\item $\latoin[\prof_D][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{Dom})
-	\item $\lato[\prof_S][\set{a, b, c}]$ (\laxiom{Sym})
-	\item $(\lato[\prof_D][\set{a}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{a}]$ (\laxiom{Reinf})
-	\item $(\lato[\prof_D][\set{b}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{b}]$ (\laxiom{Reinf})
-	\item $(\lato[\prof_D][\set{a, b}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{a, b}]$ (\laxiom{Reinf})
-	\item $\lato[\prof_D][\set{a}] → \lato[\prof][\set{a}]$ (PR from 2 \& 3)
-	\item $\lato[\prof_D][\set{b}] → \lato[\prof][\set{b}]$ (PR from 2 \& 4)
-	\item $\lato[\prof_D][\set{a, b}] → \lato[\prof][\set{a, b}]$ (PR from 2 \& 5)
-	\item $\lato[\prof_D][\set{a}] ∨ \lato[\prof_D][\set{b}] ∨ \lato[\prof_D][\set{a, b}]$ (rewrite 1)
-	\item $\lato[\prof][\set{a}] ∨ \lato[\prof][\set{b}] ∨ \lato[\prof][\set{a, b}]$ (PR from 6--9)
-	\item $\latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$ (rewrite 10)\qedhere
-\end{enumerate}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Example shortened}
-Tweak l-axioms to skip steps which will seem intuitive to humans.
-\begin{definition}[Reinforcement-sets]
-For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts}$, {\tiny $\cap Q ≠ \emptyset, Q \in \alpha_1 × \alpha_2$}: $(\latoin[\prof_1][\alpha_1] ∧ \latoin[\prof_2][\alpha_2]) → \latoin[\prof_1 + \prof_2][\bigcup_{A_1 \in \alpha_1, A_2 \in \alpha_2} \set{A_1 \cap A_2}]$.
-\end{definition}
 	\begin{enumerate}
-%TODO make first letter of laxioms a capital.
 		\item $\latoin[\prof_D][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{dom})
 			\item $\lato[\prof_S][\set{a, b, c}]$ (\laxiom{Sym})
 			\item $((1) ∧ (2)) → \latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{Reinf-sets})
 			\item $\latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$
 	\end{enumerate}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Soundness and completeness}
-	
-	Consider an l-axiomatization $J$ and a claim $c = \latoin[\prof][\alpha]$.
-	\begin{theorem}[Soundness]
-		If there exists an argument $\left(c, \text{proof}\right)$ grounded on $J$, the claim holds given $J$.
-	\end{theorem}
-	\begin{theorem}[Completeness]
-		If the claim holds given $J$, then there exists an argument $(c, \text{proof})$ grounded on $J$.
-	\end{theorem}
-	This is easily obtained from the soundness and completeness of natural deduction in propositional logic.
 \end{frame}
 
 \section{Arguing for Borda}
@@ -615,7 +450,7 @@ For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts
 	\frametitle{Elementary profile}
 	
 	Fix an arbitrary linear order $k$ on $\allalts$. Given $A \subseteq \allalts$, define $\pelem{A}$.
-	\begin{minipage}{(\columnwidth - 2em) * \real{0.6}}
+	\begin{minipage}{(\columnwidth - 2em) * \real{0.58}}
 		\begin{definition}[Elementary profile]
 			\begin{tikzpicture}
 				\path node[profile matrix, row 2/.style={nodes={draw, rectangle, minimum width=1.5em, minimum height=9ex}}, row 3/.style={nodes={draw, rectangle, minimum width=1.5em, minimum height=6ex}}] (profile) {
@@ -637,7 +472,7 @@ For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts
 			\end{tikzpicture}
 		\end{definition}
 	\end{minipage}\hspace{2em}%
-	\begin{minipage}{(\columnwidth - 2em) * \real{0.4}}
+	\begin{minipage}{(\columnwidth - 2em) * \real{0.42}}
 		\begin{example}
 			\begin{tikzpicture}
 				\path node[profile matrix] (profile) {
@@ -749,8 +584,7 @@ For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts
 \begin{frame}
 	\frametitle{Counter-argument against Borda}
 	
-	\begin{block}{Counter-argument against Borda?}
-		\pause
+	\begin{block}{Counter-argument against Borda}
 		Not Condorcet-consistent!
 	\end{block}
 	\begin{example}
@@ -766,8 +600,6 @@ For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts
 	\end{example}
 	\begin{itemize}
 		\item Argument against Borda: use a \laxiom{Cond} l-axiom
-		\item Then?
-		\pause
 		\item Counter-argue with \laxiom{FvsC}.
 	\end{itemize}
 \end{frame}
@@ -797,22 +629,6 @@ For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts
 	\end{itemize}
 \end{frame}
 
-\subsection{Adaptive systems}
-\begin{frame}
-	\frametitle{Building adaptive recommender systems}
-	
-	\begin{block}{Role of preference models}
-		\begin{itemize}
-			\item Capture the alternatives to be recommended
-			\item Determine the best argumentation strategy
-		\end{itemize}
-	\end{block}
-%	\begin{itemize}
-%		\item Use machine learning approaches?
-%		\item Challenge: build databases!
-%	\end{itemize}
-\end{frame}
-
 \subsection{Conclusion}
 \begin{frame}
 	\frametitle{Conclusion}
@@ -837,6 +653,225 @@ For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts
 \appendix
 \AtBeginSection{
 }
+
+\section{Language}
+\begin{frame}
+	\frametitle{Example of axiom}
+	
+	\begin{itemize}
+		\item Dominance: if $a$ dominates $b$ in $\prof$, then $b$ may not win.
+		\item We want a language to express this kind of axioms.
+	\end{itemize}
+\end{frame}
+
+\subsection{Presentation}
+\begin{frame}
+	\frametitle{L-axioms}
+	
+	\begin{itemize}
+		\item Now: “translate” axioms into language-axioms.
+		\item An \emph{l-axiom} is a set of formulæ.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Shortcut notations}
+	
+	$\powersetz{\allalts}$ the set of subsets of $\allalts$, excluding the empty set.
+	\\[2 em]
+	Let $\alpha \subseteq \powersetz{\allalts}$ be a set of possible winning alternatives.
+	\begin{block}{Uni-profile clause}
+		$\latoin$ shortcut for:
+		\begin{equation}
+			\bigvee_{A \in \alpha} \lato.
+		\end{equation}
+		\begin{itemize}
+			\item Intuitive content.
+			\item Called a uni-profile clause.
+		\end{itemize}
+	\end{block}
+\end{frame}
+
+\subsection{L-axioms}
+\begin{frame}
+	\frametitle{Domain knowledge}
+	
+	\begin{itemize}
+		\item We need some formulæ encoding the voting rule concept.
+		\item Define $\kappa$ as the set of all those formulæ.
+	\end{itemize}
+	\begin{block}{Domain knowledge $\kappa$}
+		\setlength\abovedisplayskip{1 ex}
+		\begin{enumerate}
+			\item a voting rule can’t select more than one set of winners:\\
+			for all $\prof$ and all $\emptyset \subset A ≠ B \subseteq \allalts$,
+			\begin{equation}
+				\lato[\prof][A] ∧ \lato[\prof][B] → \bot.
+			\end{equation}
+			\item a voting rule must select at least one set of winners:\\
+			for all $\prof$,
+			\begin{equation}
+				\latoin[\prof][\powersetz{\allalts}].
+			\end{equation}
+		\end{enumerate}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Fishburn-against-Condorcet argument}
+	
+	\begin{minipage}{5.5cm}
+		\citet[p. 544]{fishburn_paradoxes_1974} argument against the Condorcet principle (see also \url{http://rangevoting.org/FishburnAntiC.html}).
+		\begin{block}{Condorcet winner}
+%		\setlength\abovedisplayskip{0 ex}
+%		\begin{equation}
+			$w \text{ VS } \mu, \mu \in \set{a, \ldots, h}\text{? }\uncover<2->{51/101}$
+%		\end{equation}
+		\end{block}
+	\end{minipage}%
+	\begin{minipage}{\columnwidth-5cm}
+		\small
+		\begin{equation}
+			\begin{array}{lrrrrrr}
+				&\multicolumn{6}{c}{\text{nb voters}}\\
+			\cmidrule{2-7}
+					&31	&19	&10	&10	&10	&21	\\
+			\midrule
+				1	&a	&a	&f	&g	&h	&h	\\
+				2	&b	&b	&w	&w	&w	&g	\\
+				3	&c	&c	&a	&a	&a	&f	\\
+				4	&d	&d	&h	&h	&f	&w	\\
+				5	&e	&e	&g	&f	&g	&a	\\
+				6	&w	&f	&e	&e	&e	&e	\\
+				7	&g	&g	&d	&d	&d	&d	\\
+				8	&h	&h	&c	&c	&c	&c	\\
+				9	&f	&w	&b	&b	&b	&b	\\
+			\end{array}
+		\end{equation}
+	\end{minipage}
+	\vspace{-1pt}
+	\onslide<3>
+	\begin{equation}
+		\vspace*{-8.4pt}
+		\begin{array}{lrrrrrrrrr}
+			&\multicolumn{9}{c}{\text{ranks}}\\
+		\cmidrule{2-10}
+			&1	&≤2	&≤3	&≤4	&≤5	&≤6	&≤7	&≤8	&≤9	\\
+		\midrule
+		w	&0	& 30	& 30	& 51	& 51	& 82	& 82	& 82	&101	\\
+		a	&50	& 50	& 80	& 80	& 101	& 101	& 101	&101	&101	\\
+		\end{array}
+	\end{equation}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Fishburn-versus-Condorcet l-axiom}
+	
+	Define $\prof_F$ the profile shown in the previous slide.
+	\begin{definition}[Fishburn-versus-Condorcet]
+		The Fishburn-versus-Condorcet l-axiom \laxiom{FvsC} is defined as:
+		\setlength\abovedisplayskip{1 ex}
+		\begin{equation}
+			\latoin[\prof_F][\powersetz{\allalts \setminus \set{w}}].
+		\end{equation}
+	\end{definition}
+\end{frame}
+
+\begin{frame}
+	\frametitle{L-axiomatization}
+	
+	An l-axiomatization is a set of l-axioms.
+	
+	\begin{definition}[Conforming to $J$]
+		The rule $f$ conforms to the l-axiomatization $J$ iff %$f$ conforms to all $j$ in $J$, iff $v_f$ satisfies all $j$, iff 
+		$v_f$ assigns the value $\ltru$ to all formulæ in $j$, for all $j \in J$.
+	\end{definition}
+	An l-axiomatization is consistent iff there exists a voting rule conformant to it.
+\end{frame}
+
+\subsection{Arguments}
+\begin{frame}
+	\frametitle{Arguments}
+	
+	\begin{definition}[Argument]
+		An argument grounded on $J$ is a pair $(\text{\emph{claim}}, \text{\emph{proof}})$,
+		\begin{itemize}
+			\item $J$ an l-axiomatization,
+			\item \emph{claim} a uni-profile clause (thus of the form $\latoin[\prof][\alpha]$),
+			\item \emph{proof} a natural deduction proof of the claim grounded on $J$.
+		\end{itemize}
+	\end{definition}
+	\begin{itemize}
+		\item The argument shows that for all voting rules $f$ conformant to $J$, $f(\prof)$ selects a set of winners among $\alpha$.
+		\item The argument claims that it is only reasonable to choose the winners among $\alpha$ for $\prof$ (provided $J$ is accepted).
+		\item \emph{Consistent} arguments require a consistent l-axiomatization.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Example proof}
+	$
+	\prof_D =
+	\begin{array}{cc}
+		a&b\\
+		b&c\\
+		c&a\\
+	\end{array}, 
+	\prof_S =
+	\begin{array}{cc}
+		a&c\\
+		b&b\\
+		c&a\\
+	\end{array}, 
+	\prof = \prof_D + \prof_S = 
+					\begin{array}{cccc}
+						a&b&a&c\\
+						b&c&b&b\\
+						c&a&c&a\\
+					\end{array}
+	$.
+\begin{enumerate}
+	\item $\latoin[\prof_D][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{Dom})
+	\item $\lato[\prof_S][\set{a, b, c}]$ (\laxiom{Sym})
+	\item $(\lato[\prof_D][\set{a}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{a}]$ (\laxiom{Reinf})
+	\item $(\lato[\prof_D][\set{b}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{b}]$ (\laxiom{Reinf})
+	\item $(\lato[\prof_D][\set{a, b}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{a, b}]$ (\laxiom{Reinf})
+	\item $\lato[\prof_D][\set{a}] → \lato[\prof][\set{a}]$ (PR from 2 \& 3)
+	\item $\lato[\prof_D][\set{b}] → \lato[\prof][\set{b}]$ (PR from 2 \& 4)
+	\item $\lato[\prof_D][\set{a, b}] → \lato[\prof][\set{a, b}]$ (PR from 2 \& 5)
+	\item $\lato[\prof_D][\set{a}] ∨ \lato[\prof_D][\set{b}] ∨ \lato[\prof_D][\set{a, b}]$ (rewrite 1)
+	\item $\lato[\prof][\set{a}] ∨ \lato[\prof][\set{b}] ∨ \lato[\prof][\set{a, b}]$ (PR from 6--9)
+	\item $\latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$ (rewrite 10)\qedhere
+\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Example shortened}
+Tweak l-axioms to skip steps which will seem intuitive to humans.
+\begin{definition}[Reinforcement-sets]
+For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts}$, {\tiny $\cap Q ≠ \emptyset, Q \in \alpha_1 × \alpha_2$}: $(\latoin[\prof_1][\alpha_1] ∧ \latoin[\prof_2][\alpha_2]) → \latoin[\prof_1 + \prof_2][\bigcup_{A_1 \in \alpha_1, A_2 \in \alpha_2} \set{A_1 \cap A_2}]$.
+\end{definition}
+	\begin{enumerate}
+%TODO make first letter of laxioms a capital.
+		\item $\latoin[\prof_D][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{dom})
+			\item $\lato[\prof_S][\set{a, b, c}]$ (\laxiom{Sym})
+			\item $((1) ∧ (2)) → \latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{Reinf-sets})
+			\item $\latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Soundness and completeness}
+	
+	Consider an l-axiomatization $J$ and a claim $c = \latoin[\prof][\alpha]$.
+	\begin{theorem}[Soundness]
+		If there exists an argument $\left(c, \text{proof}\right)$ grounded on $J$, the claim holds given $J$.
+	\end{theorem}
+	\begin{theorem}[Completeness]
+		If the claim holds given $J$, then there exists an argument $(c, \text{proof})$ grounded on $J$.
+	\end{theorem}
+	This is easily obtained from the soundness and completeness of natural deduction in propositional logic.
+\end{frame}
 
 \begin{frame}[allowframebreaks]
 	\frametitle{Bibliography}
