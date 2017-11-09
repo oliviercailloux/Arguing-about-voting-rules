@@ -1,25 +1,13 @@
 Previous/Aamas/Dire à Aamas.txt
-arguing.aux
-arguing.bbl
-arguing.blg
-arguing.fdb_latexmk
-arguing.fls
-arguing.log
-arguing.synctex.gz
-Pres/*.aux
-Pres/*.bbl
-Pres/*.blg
-Pres/*.fdb_latexmk
-Pres/*.fls
-Pres/*.log
-Pres/*.nav
-Pres/*.snm
-Pres/*.synctex.gz
-Pres/*.toc
-Pres/*.vrb
-Poster/*.aux
-Poster/*.fdb_latexmk
-Poster/*.fls
-Poster/*.log
-Poster/*.synctex.gz
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.nav
+*.snm
+*.toc
+*.vrb
 
