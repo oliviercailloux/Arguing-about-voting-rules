@@ -1,0 +1,1177 @@
+\documentclass{comsoc2016}
+\usepackage{nag}
+\input{preamble/packages}
+\input{preamble/math_basics}
+\input{preamble/math_mine}
+\input{preamble/redac}
+\input{preamble/draw}
+\input{preamble/acronyms}
+
+\fussy
+
+\title{Arguing about Voting Rules}
+\author{Olivier Cailloux and Ulle Endriss}
+
+\pagestyle{plain}
+
+\begin{document}
+\hypersetup{
+	pdftitle = {Arguing about Voting Rules},
+	pdfkeywords={Social Choice Theory, Argumentation, Decision Support},
+	pdfsubject={Social choice theory},
+ 	pdfauthor={Olivier Cailloux, Ulle Endriss}
+} 
+
+\renewcommand{\phi}{\varphi} % only works down here
+
+\begin{abstract}
+When the members of a group have to make a decision, they can use a voting rule to aggregate their preferences. But which rule to use is a difficult question. Different rules have different properties, and social choice theorists have found arguments for and against most of them. These arguments are aimed at the expert reader, used to mathematical formalism. We propose a logic-based language to instantiate such arguments in concrete terms in order to help people understand the strengths and weaknesses of different rules. Our approach allows us to automatically derive a justification for a given election outcome or to support a group in arguing over which rule to use. We exemplify our approach with a study of the Borda rule.\footnote{This is a modified version of an article that appears in the proceedings of AAMAS-2016 \citep{cailloux_arguing_2016}. This version features a more complete presentation of the Borda-expl algorithm, but some proofs have been omitted.}
+\end{abstract}
+
+\section{Introduction}
+%A voting rule can be used to aggregate several individual preferences over a set of available alternatives to determine a collective choice. 
+
+% POSITIONING IN TERMS OF RESEARCH AREA: APPLICATION OF AI TECHNIQUES TO SCT
+When the members of a committee need to make a decision, they can use a \emph{voting rule} to aggregate their individual preferences. % over the available alternatives to arrive at a suitable collective choice. The normative and mathematical analysis of such voting rules is part of \emph{social choice theory}~\citep{ArrowEtAl2002}, and their algorithmic properties are studied in \emph{computational social choice}~\citep{BrandtEtAlMAS2013}. The significant interest amongst AI researchers in social choice theory in recent years, initially sparked by the relevance of the theory to AI applications in areas such as recommender systems, multiagent systems, and search technologies, has opened up several entirely new perspectives on the old problem of voting and has led to novel synergies with a variety of fields in AI and computer science, such as algorithms, knowledge representation, and machine learning. In this paper, we propose to explore a new such synergy and show how to fruitfully apply ideas from automated reasoning and principles of argumentation as studied in AI to a new kind of problem in voting.
+%
+% THE PROBLEM: NON-EXPERTS CANNOT USE ARGUMENTS FOR/AGAINST VOTING RULES
+There are many different voting rules: \emph{Plurality}, \emph{Veto}, \emph{Borda}, \emph{Copeland}, \emph{Approval}, and so forth~\citep{Taylor2005}. Each of them satisfies certain appealing properties, but none is perfect. 
+%Each also violates some such properties and will produce a counterintuitive outcome in certain situations. 
+Multiple arguments in favour of and against 
+%properties that a voting rule should satisfy, or more directly in favour or against voting rules themselves, 
+different rules have been put forward in the literature, starting with the famous dispute between Condorcet and Borda in the 18th century~\citep{McLeanUrken1995}. However, these arguments are dispersed in the specialised literature
+% on social choice theory, 
+and are often developed in a highly formal and abstract manner. It therefore is difficult, if not impossible, for an untrained individual to understand them. This means that the members of our committee can hardly have an informed discussion about which voting rule to use.
+% AIM: ENABLE ARGUING ABOUT VOTING RULES
+We would like to enable such discussions, by making arguments regarding voting rules understandable to non-experts and by providing tools for generating and applying those arguments in concrete situations. 
+
+% OUR CONTRIBUTIONS: FRAMEWORK AND BORDA ALGORITHM
+In this paper, we make two contributions towards this long-term goal of enabling informed argumentation about voting rules between non-expert users.
+%these long-term goals. % production of easily understandable arguments. 
+First, we develop a general framework for modelling arguments for and against specific outcomes of a voting rule, given a concrete election instance. This framework allows us to represent many important arguments, either new or taken from the literature, and either highly specific or in the general and abstract form of \emph{axioms} encoding high-level properties. Because the framework instantiates these arguments on concrete examples, it does not require the audience to understand the axioms in their full generality. Nevertheless, an argument in our framework can still be general in the sense of being applicable to any concrete election instance. Importantly, our framework is not tailored to defend a specific rule: it permits the use of arguments in favour of different voting rules. 
+%We believe this is an original and interesting feature of our approach. 
+As a second contribution, we instantiate our framework by providing an algorithm for generating arguments justifying the outcome recommended by the \emph{Borda rule} for any given election. The technique we use builds on the axiomatisation of that rule developed by \citet{young_axiomatization_1974}.
+
+\begin{example}\label{ex:intro}
+To illustrate what we ultimately aim for, consider an election with three alternatives, $\set{a,b,c}$, and three voters. Voters~$v_1$ and $v_2$ both prefer $a$ to $b$ to $c$, while voter~$v_3$ preferes $c$ to $b$ to $a$. The situation is summarised in \cref{fig:introProfs} in the form of preference profile~$\prof$. Which alternative wins this election depends on the voting rule used. The Veto rule, for instance, recommends electing the alternative that is ranked at the bottom least often, i.e., it would elect alternative~$b$. The Borda rule, on the other hand, awards 2 points every time an alternative is ranked first, 1 point every time it is ranked second, and 0 points every time it is ranked last, i.e., under the Borda rule alternative~$a$ would win (with $2+2+0$ points against $1+1+1$ for $b$ and $0+0+2$ for $c$). So which alternative is the ``right'' winner? What we envision is a system that would be able to automatically generate an easy-to-understand sequence of arguments for justifying, for instance, that alternative~$a$ is the deserving winner. Such a system might initiate the following dialogue.
+\begin{center}\small\begin{tabular}{@{}l@{\;\;}p{11cm}@{}}
+\textbf{System:} & Consider election $\prof_1$, involving only voter~$v_1$ (see also \cref{fig:introProfs}). Do you agree that $a$, enjoying unanimous support, should win this election? \\[2pt]
+\textbf{User:} & Yes, of course. \\[2pt]
+\textbf{System:} & Now consider election $\prof_2$, involving only voters $v_2$ and $v_3$. Do you agree that, for symmetry reasons, the outcome should be a three-way tie? \\[2pt]
+\textbf{User:} & Yes, that sounds reasonable. \\[2pt]
+\textbf{System:} & Observe that when we combine $\prof_1$ and $\prof_2$, we obtain our election of interest, namely $\prof$. Do you agree that in this combined election, as there was a three-way tie in $\prof_2$, $\prof_1$ should be used to decide the winner? \\[2pt]
+\textbf{User:} & Yes, I do. \\[2pt]
+\textbf{System:} & To summarise, you agree that $a$ should win for~$\prof$.
+\end{tabular}\end{center}
+
+%The reader familiar with the axiomatic method in social choice theory may recognise some of the standard axioms satisfied by the Borda rule at the core of two of these arguments (namely Pareto dominance and reinforcement). We will formally introduce these axioms in \Cref{sec:fw}.
+If the user disagrees with one of the steps, the system might try another strategy of arguing in favour of $a$.
+Alternatively, we might also ask our system to generate a sequence of arguments to justify that $b$ should win.
+\end{example}
+
+
+\begin{figure}
+	\centering
+	$
+	\prof =
+	\begin{array}{ccc}
+		v_1&v_2&v_3\\
+		a&a&c\\
+		b&b&b\\
+		c&c&a\\
+	\end{array},\quad
+	\prof_1 =
+	\begin{array}{c}
+		v_1\\
+		a\\
+		b\\
+		c\\
+	\end{array}$,\quad
+	$
+	\prof_2 =
+	\begin{array}{cc}
+		v_2&v_3\\
+		a&c\\
+		b&b\\
+		c&a\\
+	\end{array} 
+	$.
+        \vspace{-5pt}
+	\caption{The profiles used in the introductory example.} % Each column represents the preference ordering of one voter.}
+	\label{fig:introProfs}
+\end{figure}
+
+In this paper, we do not address the rendering of such arguments in natural language. Rather, we address the challenge of automatically generating the arguments themselves, expressed in a simple logic-based language. Our framework offers a general solution to the problem of representing such arguments to justify any given outcome for any given election. Of course, a given user will only find some of the arguments that can be represented in principle convincing in practice. For any ``natural'' voting rule, one should expect that there will be (by virtue of its naturalness) a convincing set of arguments that can be used to justify the outcomes recommend by that rule. The challenge then is to automatically generate a concrete sequence of such arguments for a given outcome to be justified. We provide a solution to this algorithmic problem for the case of the Borda rule. 
+
+% PAPER OVERVIEW
+The remainder of this paper is organised as follows. 
+\Cref{sec:fw} introduces a logic for specifying reasonableness criteria (i.e., axioms) for voting rules and
+%We prove the logic to be complete and demonstrate how it can be used to justify an election outcome.
+in \cref{sec:borda} we provide an algorithm for justifying outcomes returned by the Borda rule for arbitrary elections. 
+While our main technical contributions concern the challenge of justifying a given election outcome, in \cref{sec:argumentation} we briefly explore further applications of our approach to richer forms of argumentation about voting rules. 
+\Cref{sec:conclusion} concludes with a discussion of related work. % and an outlook on possible extensions to our approach.
+
+\section{General Framework}
+\label{sec:fw}
+In this section we introduce a formal model of voting rules for variable electorates,
+% and variable sets of alternatives, 
+we show how to describe such rules and their properties in a simple logical language, and we then use this language to develop a framework for reasoning and arguing about voting rules.
+
+\subsection{Voting Rules}
+We begin by introducing what is essentially the standard formal model of voting familiar from social choice theory~\citep{Gaertner2006,Taylor2005}, with varying sets of voters. %However, as we need to explicitly model voting rules ranging over varying sets of voters, we need to be somewhat more general in our definitions than is common practice.
+
+%\thesealts must be finite?; \allalts may be infinite.
+Let $\thesealts$, with $m = \card{\allalts}$, be the finite set of %available 
+\emph{alternatives}. Let $\powersetz{\allalts}$ denote the powerset of $\allalts$, excluding the empty set. We use the letters $\alts \subseteq \allalts$ and $α \subseteq \powersetz{\allalts}$ to designate subsets of alternatives and sets of subsets of alternatives, respectively. We model \emph{preferences} as (strict) linear orders (transitive, irreflexive, and connected binary relations) over $\allalts$. %alternatives.
+Let $\allvoters$ be the infinite universe of potential \emph{voters}. 
+A \emph{profile} $\prof$ is a mapping from a finite subset of voters $N_\prof \subseteq \allvoters$
+% triple $(N_\prof, L_\prof)$, with $N_\prof \subseteq \allvoters$, $N_\prof$ finite, and $L_\prof$ mapping voters from $N_\prof$ 
+to linear orders over $\allalts$. For technical reasons, we allow $N_\prof$ to be empty, in which case we call $\prof$ the \emph{null profile}.
+Let $\allprofs$ denote the set of all non-null profiles. A \emph{voting rule}~$f$ maps each non-null profile $\prof$ to a non-empty subset of $\thesealts$, the set of (tied) election winners for the profile in question. 
+
+Given a profile $\prof$, let $\pinv$ be the profile consisting of the reverses of the linear orders found in $\prof$.
+For two profiles $\prof_1$ and $\prof_2$ defined over disjoint sets of voters, we define their \emph{sum} $\prof_1 \oplus \prof_2$ as the profile $\prof_1 \cup \prof_2$. (Note that the union of two functions, considered as sets of input-output pairs, defined over disjoint domains, is itself a well-defined function.) In this paper, we will only use addition of profiles in contexts where the identities of the voters do not matter. Therefore, 
+%by a slight abuse of notation, 
+we also define addition over profiles that are not defined over disjoint sets of voters, the addition then being preceded by an arbitrary renaming of the voters of the second profile.
+Formally, given two profiles $\prof_1, \prof_2$ with $N_{\prof_1} ∩ N_{\prof_2} ≠ \emptyset$, define $s$ as an arbitrary injection mapping every voter $i \in N_{\prof_2}$ to a voter $s(i) \in \allvoters \setminus N_{\prof_1}$; define $t(\prof)$ as the profile $\set{(s(i), P) \suchthat (i, P) \in \prof}$; and define $\prof_1 \oplus \prof_2 = \prof_1 \cup t(\prof_2)$.
+ E.g., for $\prof = \set{(i, (a, b))}$, $\prof \oplus \prof$ is $\set{(i, (a, b)), (i', (a, b))}$, with $i' ≠ i$ an arbitrary voter.
+  A profile $\prof$ may be multiplied by a natural number $k \in \N$, defined in the natural way as repeated addition with copies of itself and denoted by $k\prof$.
+Multiplying a profile by zero yields the null profile. Throughout this paper, natural numbers are taken to include zero.
+
+%example of dominance as a general axiom (property)
+
+\subsection{Logical Language and Axioms}
+To formally describe voting rules we will make use of the language of propositional logic over the set of atomic propositions $\Set{p_{\prof, \alts} \suchthat \prof \in \allprofs,\ \emptyset \subset \alts \subseteq \thesealts}$. This set includes one atom for every possible non-null profile~$\prof$ and every possible non-empty subset~$\alts$ of alternatives. The language~$\alllang$ is the set of all formulæ that can be formed using these atoms and the propositional connectives 
+%\emph{not}, \emph{and}, \emph{or}, and \emph{implication}, respectively denoted by 
+$¬, ∧, ∨$, and $→$ as well as the special propositions $\top$ and $\bot$, in the usual manner~\citep{VanDalen2013}. A \emph{literal} is an atom or its negation; a \emph{clause} is a disjunction of literals.
+
+The semantics of $\alllang$ is defined as follows. Given a voting rule~$f$, the \emph{model} $v_f$ assigns the value $\ltru$ (\textit{true}) to the atom $p_{\prof, \alts}$ if $f(\prof) = \alts$ and the value $\lfal$ (\textit{false}) otherwise. That is, $p_{\prof, \alts}$  is true if $f$ chooses $\alts$ as the set of winners whenever the voters vote as in profile $\prof$. The definition of $v_f$ extends to the whole set of formulæ using the usual semantics of propositional logic. We say that $v_f$ \emph{satisfies} a set of formulæ \emph{iff} it assigns the value $\ltru$ to every formula in the set.
+
+To make the semantics of the atoms explicit in the language, we from now on write $\lato$ instead of $p_{\prof, \alts}$. We also write $\latoin[\prof][α]$, for any non-empty $α \subseteq \powersetz{\thesealts}$, as a shorthand for $\bigvee_{A \in α}\lato$. We will refer to such clauses involving only one profile, i.e., formulæ specifying the possible sets of winners for a given profile, as \emph{uni-profile clauses}.
+
+We can express familiar as well as new axioms of social choice theory in our language. We call any such rendering of an axiom in $\alllang$ an \emph{\txtlaxiom}. Formally, an \txtlaxiom{} is simply a set of formulæ. 
+Here are some examples for \txtlaxioms{}.
+\begin{description}
+	\item[\laxiom{Dom}] \emph{Dominance} postulates that a Pareto-dominated alternative (i.e., an alternative to which some other alternative is preferred by every voter) should not win. The formulæ are, for each $\prof \in \allprofs$, $\latoin[\prof][\powersetz{U_\prof}]$, where $U_\prof$ is the set of alternatives that are not Pareto-dominated in $\prof$.
+	\item[\laxiom{Anon}]\label{def:anon} \emph{Anonymity} asks for symmetry w.r.t.\ voters: for all $\prof \in \allprofs$, $\emptyset \!\subset\! A \!\subseteq\! \thesealts$, $N' \!\subseteq\! \allvoters$, bijections $\sigma:N'\to N_\prof$, anonymity requires $\lato[\prof][A] \rightarrow \lato[(\prof \circ \sigma)][A]$.
+	\item[\laxiom{Cond}]\label{def:cond} This axiom says that, if there is a \emph{Condorcet winner} (an alternative beating all other alternatives in one-on-one majority contests), then it should be the sole winner:
+thus, for each profile~$\prof$ with Condorcet winner~$a$, it requires $\lato[\prof][\set{a}]$.
+	\item[\laxiom{Reinf}]\label{def:reinf} \emph{Reinforcement} requires that, when joining two profiles for which the winning sets have a non-empty intersection, the resulting profile must have that intersection as the only winners: for each $\prof_1, \prof_2, N_{\prof_1} \cap N_{\prof_2} = \emptyset, 
+%A_{\prof_1} = A_{\prof_2}, \alts_1 \subseteq \thesealts[\prof_1], \alts_2 \subseteq A_{\prof_2}, 
+\alts_1 \cap \alts_2 ≠ \emptyset$, reinforcement imposes the formula $(\lato[\prof_1][\alts_1] ∧ \lato[\prof_2][\alts_2]) → \lato[\prof_1 \oplus \prof_2][\alts_1 \cap \alts_2]$.
+	\item[\laxiom{SymCanc}] \emph{Symmetric cancellation} says that, when a profile consists of a linear order and its inverse, then the only reasonable outcome is the full set of alternatives: for each such profile $\prof$, this axiom thus requires $\lato[\prof][\allalts]$.
+\end{description}
+
+Reinforcement, also known as \emph{consistency} in the literature, was introduced by \citet{young_axiomatization_1974}. Like  dominance and the Condorcet principle, it is one of the classical axioms considered in social choice theory~\citep{Gaertner2006}. \laxiom{SymCanc} is an \emph{ad hoc}, but intuitively appealing, axiom we will use in \cref{ex:simpleProof}.
+
+An \txtlaxiom{} may also be limited to capturing what an adequate behaviour is on a few specific cases, or even just a single specific case. As an example, let us inspect the argument put forward by \citet[p.~544]{fishburn_paradoxes_1974} against the Condorcet principle. Consider the profile $\prof_F$ shown in \cref{fig:fishburnProfile}, involving $9$ alternatives and $101$ voters.\footnote{Fishburn explains his argument without giving a fully worked out example. The profile used here is taken from \url{http://rangevoting.org/FishburnAntiC.html}.} Observe that $w$ is the Condorcet winner, as it is preferred to any other alternative by $51$ out of $101$ voters. Yet, it is intuitively appealing to postulate that alternative~$a$ is in fact a more deserving winner of this election. This may be seen by looking at the numbers of times alternatives $a$ and $w$ obtain a given rank (also displayed in \cref{fig:fishburnProfile}).%, which suggests a strong argument for preferring $a$ over~$w$.
+
+\begin{figure}
+        \begin{equation}
+                \newlength{\ldisttables}
+                \setlength{\ldisttables}{13mm}
+                \begin{array}{lrrrrrr@{\hskip \ldisttables}lrr}
+                        &&\multicolumn{4}{c}{\text{number of voters}}\\
+                \cmidrule(r{\dimexpr \ldisttables - \cmidrulekern \relax}){2-7}
+                                &31     &19     &10     &10     &10     &21     &       &w      &a\\
+                \cmidrule(r{\dimexpr \ldisttables - \cmidrulekern \relax}){1-7}\cmidrule{9-10}
+                        1       &a      &a      &f      &g      &h      &h      &1      &0      &50     \\
+                        2       &b      &b      &w      &w      &w      &g      &2      &30     &0      \\
+                        3       &c      &c      &a      &a      &a      &f      &3      &0      &30     \\
+                        4       &d      &d      &h      &h      &f      &w      &4      &21     &0      \\
+                        5       &e      &e      &g      &f      &g      &a      &5      &0      &21     \\
+                        6       &w      &f      &e      &e      &e      &e      &6      &31     &0      \\
+                        7       &g      &g      &d      &d      &d      &d      &7      &0      &0      \\
+                        8       &h      &h      &c      &c      &c      &c      &8      &0      &0      \\
+                        9       &f      &w      &b      &b      &b      &b      &9      &19     &0      \\
+                \end{array}
+        \end{equation}
+        \caption{The profile Fishburn uses to argue against the Condorcet property; and the number of voters placing alternative $w$ or $a$ at a given rank.}
+        \label{fig:fishburnProfile}
+\end{figure}
+
+\begin{description}
+\label{def:fvsc}
+\item[\laxiom{FvsC}] The \emph{Fishburn-versus-Condorcet \txtlaxiom{}} is defined as the formula $\lato[\prof_F][\set{a}]$.%$\latoin[\prof_F][\powersetz{\alts_{\prof_F} \setminus \set{w}}]$.
+\end{description}
+
+%We conclude this section by fixing some terminology regarding the relationship between \txtlaxioms{} and voting rules.
+
+
+\subsection{Reasoning about Voting Rules}
+%\subsection{Claims and Proofs}
+
+Now that we have a logical language for describing the outcomes of a voting rule for different profiles in place, we want to be able to reason about statements in this language. 
+%To this end, we first fix some additional terminology regarding the relationship between \txtlaxioms{} and voting rules. 
+
+\begin{definition}
+An \emph{\laxiomatisation} is a set of \txtlaxioms{}. A voting rule $f$ \emph{conforms} to the \laxiomatisation{} $J$ iff $v_f$ satisfies all \txtlaxioms{} $j$ in $J$. An \laxiomatisation{} $J$ is \emph{consistent} iff some voting rule conforms to it. $J$ \emph{characterises} $f$ iff $f$ is the only voting rule conforming~to~it.
+\end{definition}
+
+Given a set of assumptions of what makes a good voting rule, expressed in the form of an \laxiomatisation{}, we want to be able to decide whether a given claim about a given set of alternatives being the deserving winners for a given profile logically follows from those assumptions. In other words, we want to be able to justify election outcomes in terms of a given \laxiomatisation{}. 
+%The next definition fixes the semantics of what it means for such a claim to be valid.
+
+\begin{definition}%[Validity of a claim]
+	Consider an \laxiomatisation{} $J$ and a formula $\phi$ in our language. We say that $\phi$ is a \emph{valid claim} given $J$ iff $v_f(\phi)=\ltru$ for all voting rules $f$ conforming~to~$J$.
+\end{definition}
+
+We use the term ‘claim’ instead of ‘formula’ when we want to emphasise that a formula is used to make a point about specific voting rules.
+As our proposal is aimed at making arguments as easy to understand as possible, we suggest to restrict claims to uni-profile clauses, which have an easily interpretable meaning. Our results are general however.
+Note that if $J$ is inconsistent, then all claims are vacuously valid.
+
+We can now define a formal proof system to allow us to establish whether a given claim is valid. Let us first define $\kappa$, representing our domain knowledge. It is the set of all formulæ of the form $\lato[\prof][\alts_1] ∧ \lato[\prof][\alts_2] → \bot$, for all profiles $\prof$ and $\emptyset \subset \alts_1 ≠ \alts_2 \subseteq \thesealts$ (saying that a voting rule $f$ cannot select more than one set of winners), plus all formulæ of the form $\latoin[\prof][\powersetz{\thesealts}]$ (saying that $f$ must select at least one set of winners). Thus, $\kappa$ encodes the requirement of $f$ being a function. 
+We now define a proof of a claim $\phi$ grounded in $J$ as a demonstration that $\phi$ can be inferred from $J$ and $κ$, % in a suitable deductive system, 
+i.e., that $(\bigcup J) ∪ κ ⊢ \phi$. Natural deduction \citep{VanDalen2013}, which is widely regarded as producing proofs of good readability, is particularly suited to this purpose, but any other system that is sound and complete for propositional logic could be used as well.
+
+\begin{definition}%[Proof of a claim]
+	A \emph{proof} of claim $\phi$ grounded in \laxiomatisation{} $J$ is a natural deduction proof for $(\bigcup J) ∪ κ ⊢ \phi$.
+\end{definition}
+
+For the purposes of presenting examples, in this paper, we will take certain shortcuts and omit the detailed derivation of simple facts about propositional logic. We will justify such steps as being inferred `by propositional reasoning' (PR), together with a reference to the premises used. What is important in view of our ultimate goal of justifying election outcomes to users is that any such propositional reasoning step can be decomposed into a sequence of basic steps in a natural deduction proof, which can then be translated into an argument in natural language that can be explained to a non-expert user~\citep{BertotTheryJSC1998, ranta_translating_2011, WenzelTPHOL1999}.
+
+\begin{figure}
+	\centering
+	$
+	\prof =
+	\begin{array}{cccc}
+		a&b&a&c\\
+		b&c&b&b\\
+		c&a&c&a\\
+	\end{array}$,\quad
+	$
+	\prof_D =
+	\begin{array}{cc}
+		a&b\\
+		b&c\\
+		c&a\\
+	\end{array},\quad 
+	\prof_S =
+	\begin{array}{cc}
+		a&c\\
+		b&b\\
+		c&a\\
+	\end{array}
+%,\prof = \prof_D + \prof_S
+	$.
+	\caption{The profiles used in \cref{ex:simpleProof}.} % Each column represents the preference ordering of one~voter.}
+	\label{fig:exProfs}
+\end{figure}
+
+\begin{example}
+	\label{ex:simpleProof}
+	We prove below, on the basis of \txtlaxioms{} \laxiom{Dom}, \laxiom{SymCanc}, and \laxiom{Reinf} defined earlier, that the profile $\prof$ of \cref{fig:exProfs} must have as winners either $\set{a}$, $\set{b}$, or $\set{a, b}$, i.e., that $c$ should not win. Each line consists of a formula we have shown to be true, followed by the justification for that proof step. The profiles $\prof_D$ and $\prof_S$ are also defined in \cref{fig:exProfs}. Note that $\prof = \prof_D \oplus \prof_S$.
+
+% UE: don't remove empty line above, as that messes up line spacing in above paragraph (???)
+{\small
+\begin{enumerate}
+	\item $\latoin[\prof_D][\set{\set{a}, \set{b}, \set{a, b}}]$ $($\laxiom{Dom}$)$
+	\item $\lato[\prof_S][\set{a, b, c}]$ $($\laxiom{SymCanc}$)$
+	\item $(\lato[\prof_D][\set{a}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{a}]$ $($\laxiom{Reinf}$)$
+	\item $(\lato[\prof_D][\set{b}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{b}]$ $($\laxiom{Reinf}$)$
+	\item $(\lato[\prof_D][\set{a, b}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{a, b}]$ $($\laxiom{Reinf}$)$
+	\item $\lato[\prof_D][\set{a}] → \lato[\prof][\set{a}]$ $($PR from 2 \& 3$)$
+	\item $\lato[\prof_D][\set{b}] → \lato[\prof][\set{b}]$ $($PR from 2 \& 4$)$
+	\item $\lato[\prof_D][\set{a, b}] → \lato[\prof][\set{a, b}]$ $($PR from 2 \& 5$)$
+	\item $\lato[\prof_D][\set{a}] ∨ \lato[\prof_D][\set{b}] ∨ \lato[\prof_D][\set{a, b}]$ $($rewrite 1$)$
+	\item $\lato[\prof][\set{a}] ∨ \lato[\prof][\set{b}] ∨ \lato[\prof][\set{a, b}]$ $($PR from 6--9$)$
+	\item $\latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$ $($rewrite 10$)$\qedhere
+\end{enumerate}
+}
+
+Each of these steps is simple enough to be rendered in natural language, so as to be presented to a non-expert user, just as in Example~\ref{ex:intro}. For instance, steps~2 and~3 directly correspond to steps also present in Example~\ref{ex:intro}, while step~6 might be explained by pointing out that when two premises imply a conclusion, then that conclusion is implied by the first premise alone once we have established that the second premise is in fact true.
+\end{example}
+
+\begin{remark}
+	\label{rm:reinfExpanded}\label{rm:phrasingMatters}
+	It is important to understand that two \txtlaxioms{} may be equivalent, logically speaking, while leading to proofs that differ in terms of how easy or difficult they are to understand for a human. % reader. 
+%In our proposal, 
+Thus, it is important to choose \txtlaxioms{} not only according to what they entail (their logical power), but also according to the ease of understanding them. This is similar to the general goal of axiomatising a function: we search for axioms that have, as much as possible, an intuitive content. In our case, however, an \laxiomatisation{} is good if it strikes an appropriate balance between the lengths of proofs it produces and the intuitiveness of the concrete instantiations of the \txtlaxioms{} it contains. As an illustration, $\laxiom{Reinf}$ could be changed in order to shorten the proof of \cref{ex:simpleProof}. A modified $\laxiom{Reinf}$ would say, for example, that a profile associated with a set of possible sets of winners, when added to a profile that has the full set $\thesealts$ as the winners, must still be associated with the same set of possible sets of winners. This axiom would yield, in a single step, that $\latoin[\prof_D][\set{\set{a}, \set{b}, \set{a, b}}] ∧ \lato[\prof_S][\set{a, b, c}]) → \latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$. 
+\end{remark}
+
+%We now want to show that, with our definition of proofs, we can prove only and all claims that indeed are valid.
+The following result shows that the semantic notion of validity of a claim and the syntactic notion of proof of a claim coincide.
+The simple proof is given in the full version of this paper \citep{cailloux_arguing_2016}. 
+%As we shall see, this follows from an appropriate translation from voting rules to models for our logic.
+
+\begin{theorem}[Completeness]
+	For any \laxiomatisation{} $J$ and any claim $\phi$, there exists a proof of $\phi$ grounded in $J$ iff $\phi$ is valid given~$J$.
+\end{theorem}
+%\begin{proof}
+%The theorem follows from the (soundness and) completeness of natural deduction for classical propositional logic~\citep{VanDalen2013}, together with the fact that there exists a bijection between voting rules conforming to $J$ and models satisfying $J$ and $\kappa$. Indeed, for each $f$ conforming to $J$, the corresponding model $v_f$ satisfies $J$ and $\kappa$. Now take any $v$ satisfying $J$ and $\kappa$. As the model satisfies $\kappa$, we can define a rule $f$ from that model, taking $f(\prof) = A$ when the model says $\lato[\prof][A]$ is true. Because $v = v_f$, $f$ conforms to~$J$.
+%\hfill\ \end{proof}
+
+Thus, while our logical language permits us to speak about voting rules by making arbitrary claims about the possible sets of winners for a given profile, we now have a proof system in place for deriving any valid such claim from a given axiomatisation provided in the same language. The renderings of the axioms themselves may be long and unwieldy (e.g., \laxiom{Dom} explicitly lists all undominated alternatives for every profile), but the concrete proofs produced nevertheless can be expected to be relatively simple and human-readable (as seen in Example~\ref{ex:simpleProof}). Finding the right concrete profiles (e.g., $\prof_D$ and $\prof_S$ in Example~\ref{ex:simpleProof}) to use in a proof may be hard, but reading an existing proof is easy. In \cref{sec:borda} we will address this challenge of actually producing proofs.
+
+%\subsection{A Natural Form for l-Axioms}
+%Ideally, our proofs and arguments would be translated into natural language. Doing so is not an easy task and beyond the scope of this paper, but there is previous work in the automated reasoning community one can build on, also for much richer logics than we require~\cite{BertotTheryJSC1998,WenzelTPHOL1999}. Here we only propose a particularly simple form of l-axioms that can expected to ease translation, and we show that for every l-axiom there is an equivalent simple l-axiom.
+%
+%\begin{definition}[Simple l-axiom]
+%        A simple l-axiom is a set (representing a conjunction) of propositional formulae of the form $\phi → \psi$, where $\phi$ is a (possibly empty) conjunction of uni-profile formulæ and $\psi$ is a uni-profile formula.
+%\end{definition}
+%
+%That is, simple l-axioms are sets of Horn clauses over the alphabet of uni-profiles.
+%Note that $\phi \rightarrow \psi$ is simply $\psi$ when $\phi$ is the empty conjunction.
+%All examples of l-axioms in this paper are simple l-axioms.
+%This is no coincidence, as in fact \emph{every} l-axiom can be translated into a logically equivalent simple l-axiom.
+%
+%\begin{fact}
+%        \label{thm:equivSimple}
+%        Every l-axiom is equivalent to a simple l-axiom.
+%\end{fact}
+%\begin{proof}
+%        Every set of propositional formulae, and thus every l-axiom, can be rewritten as a set (representing a conjunction) of clauses of positive and negative literals. Positive literals are (particularly simple) uni-profile formulæ of the form $\lato[\prof][A]$, which equivalently can be written as negated uni-profile formulæ $\neg\latoin[\prof][\powersetz{\allalts}\setminus\{A\}]$. Similarly, negative literals are negated uni-profile formulæ of the form $\neg\lato[\prof][A]$, which are equivalent to uni-profile formulæ $\latoin[\prof][\powersetz{\allalts}\setminus\{A\}]$. Hence, we can rewrite every conjunct as a clause of literals with at most one positive literal, i.e., as an implication of the required form.
+%\end{proof}
+%
+%It should be understood that \cref{thm:equivSimple} is about logical equivalence only (see \cref{rm:phrasingMatters}). It does not imply that the produced proofs would be equivalent in terms of ease of understanding or in terms of length. We consider it likely that expressing l-axioms as simple l-axioms will tend to produce simpler proofs. It can also be expected to eases the problem of translating these arguments into natural language.
+
+\section{Justifying Borda Outcomes}
+%\section{The Case of the Borda Rule}
+\label{sec:borda}
+
+The \emph{Borda rule} is one of the most important voting rules in the literature~\citep{Taylor2005}. Under this rule, an alternative~$a$ earns as many points from a given voter as that voter ranks other alternatives below~$a$. The Borda score of an alternative is the sum of points it earns in this manner; the alternatives with the highest Borda score win. For our purposes, it will be convenient to use the following alternative definition.
+
+\begin{definition}
+Given a profile, the \emph{beta score} of an alternative is the sum of the numbers of alternatives it beats in each linear order, minus the sum of the numbers of alternatives it is beaten by in each linear order.
+Under the \emph{Borda rule} $f_B$ % selects as winners 
+the alternatives with the highest beta score win.
+\end{definition}
+%\begin{remark}
+%We use the beta score instead of the more usual Borda score because it will be useful later. The Borda score of an alternative for a given voter is the number of alternatives it beats in the preference order of that voter. It is easy to check that it does not change the definition of the rule.
+%\end{remark}
+
+\begin{remark}\label{rem:beta-borda}
+Observe that Borda %scores 
+and beta scores define the same rule. %Indeed, let 
+Let $n$ be the number of voters and recall that $m$ is the number of alternatives. The beta score, for a given voter, is $b-(m-1-b)=2b-(m-1)$, where $b$ is the Borda score of that same voter. Thus, the total beta score of an alternative is twice its total Borda score minus $n(m-1)$.
+\end{remark}
+
+In this section we want to use our logic to justify a given outcome of Borda. That is, starting from any profile $\tprof$, we want to be able to give a proof, grounded in \txtlaxioms{} that are as appealing as possible, for the claim that the only “reasonable” winners must be the ones Borda picks (provided the reader of the argument finds these instantiations of axioms indeed reasonable). We will thus, first, present an \laxiomatisation{} of Borda and, second, provide an algorithm that, given any $\tprof$, builds a proof for $\lato[\tprof][f_B(\tprof)]$.
+
+%In this section, in order to simplify notation and without loss of generality, we only use profiles defined over the full set of alternatives: $\thesealts = \allalts$.
+
+\subsection{Borda \laxiomatisationtitle}
+To present the \laxiomatisation{} that we will use to argue in favour of 
+Borda, we require a few definitions. Fix an arbitrary linear order $\ordalts$ on $\allalts$. (We will use the alphabetic ordering in our illustrative examples.)
+
+\begin{definition}
+	The \emph{elementary profile} $\pelem{A}$, $\emptyset \subset \alts \subseteq \allalts$, has two voters and is defined as follows. Let $k = \ordaltsrestr{A}$ be the restriction of ${\ordalts}$ on $A$ and let $\ell = \ordaltsrestr{\thesealts \setminus A}$. The first voter has the linear order defined by $k$ then $\ell$; the second has $\overline{k}$ then~$\overline{\ell}$.
+\end{definition}
+
+\begin{example}
+	The elementary profile $\pelem{\set{a, b}}$ corresponding to $A = \set{a, b}$, with $\allalts$ equal to $\set{a, b, c, d}$, is composed of the linear orders $(a, b, c, d)$ and $(b, a, d, c)$.
+%\begin{equation}
+%\pelem{\set{a, b}} = 
+%\begin{array}{cc}
+%	a	&	b\\
+%	b	&	a\\
+%	c	&	d\\
+%	d	&	c
+%\end{array}.
+%\end{equation}\qedhere
+\end{example}
+
+Let us call a bijection $S$ on $\allalts$ an \emph{$m$-cycle} if $S$ represents a cycle that visits each alternative in $\allalts$ exactly once (formally, if $(\allalts, S)$ is a strongly connected graph).
+It is formally defined as a set of pairs of alternatives, but we will denote such a cycle using a tuple of alternatives, where the first and last alternatives are equal, and all other alternatives appear exactly once. For example, $\left<a, c, b, d, a\right>$ denotes the $m$-cycle $\Set{(a, c), (c, b), (b, d), (d, a)}$ in $\set{a, b, c, d}$.  This cycle can also be represented as $\left<b, d, a, c, b\right>$.
+We say that a cycle in $\allalts$ \emph{generates} $m=\card{\allalts}$ linear orders on $\allalts$, in the natural way. For example, $\left<a, c, b, a\right>$ generates $\left(a, c, b\right)$, $\left(c, b, a\right)$, and $\left(b, a, c\right)$. We write linear orders with regular parentheses $(\cdots)$ to distinguish them from cycles $\left<\cdots\right>$. Conversely, observe that a linear order involving all alternatives in $\allalts$ is generated by exactly one $m$-cycle.
+
+\begin{definition}
+	The \emph{cyclic profile} $\pcycl{S}$, with $S$ an $m$-cycle, is the profile composed of all $m$ linear orders generated by~$S$. 
+\end{definition}
+
+\begin{example}
+	The cyclic profile $\pcycl{\left<a, b, c, d, a\right>}$ corresponding to $S = \left<a, b, c, d, a\right>$ with $\allalts = \set{a, b, c, d}$ has the preference orders $(a, b, c, d)$, $(b, c, d, a)$, $(c, d, a, b)$ and $(d, a, b, c)$.
+%\begin{equation}
+%\pcycl{\left<a, b, c, d, a\right>} = 
+%\begin{array}{cccc}
+%	a	&	b	&	c	&	d\\
+%	b	&	c	&	d	&	a\\
+%	c	&	d	&	a	&	b\\
+%	d	&	a	&	b	&	c
+%\end{array}.
+%\end{equation}
+\end{example}
+
+A \emph{delta vector} $\delta$ is a mapping from $\ordalts$ to the rationals: such a vector has $\binom{m}{2}$ coordinates, each mapping a pair of alternatives to a rational number.
+For every pair of alternatives $(a, b) \in {\ordalts}$, define $\delta_{ba} = -\delta_{ab}$ (slightly abusing notation). The set of delta vectors, denoted by $\deltasp$, together with addition and multiplication by a rational defined in the natural way, is a vector space.
+\begin{definition}
+For any profile $\prof$, the \emph{delta vector} $\delta^\prof$ maps every $(a, b) \in {\ordalts}$ to the signed number of victories of $a$ against $b$, i.e., $\delta^\prof_{ab}$ is the number of voters who prefer $a$ to $b$ minus the number of voters who prefer $b$ to~$a$. The delta vector corresponding to the null profile is the zero vector in the space of delta vectors.
+\end{definition} 
+Thus, $\delta^\prof$ represents the \emph{weighted majority graph} of $\prof$.
+
+We say that two profiles $\prof$ and $\prof'$ \emph{cancel} when $δ^{\pinv} = δ^{\prof'}$, thus when $\pinv$ and $\prof'$ have the same weighted majority graph, or equivalently, observing that $δ^{\pinv} = − δ^\prof$, when $\delta^{\prof \oplus \prof'} = \zerov$, where $\zerov$ is the zero vector.
+
+Below is the \laxiomatisation{} that we use for the Borda rule. It is very similar but not identical to the axiomatisation given by \citet{young_axiomatization_1974}. The fact that it is a \emph{correct} axiomatisation of the Borda rule will become clear in \Cref{sec:general-algorithm}. %follow from Theorem~\ref{thm:borda} below. As discussed below, in Section~\ref{sec:young-comparison}, our axiomatisation is very similar but not identical to the axiomatisation given by \citet{young_axiomatization_1974}.
+
+\begin{description}
+	\item[\laxiom{Elem}] For any elementary profile $\pelem{A}$, the only reasonable set of winners is $A$: for all $\emptyset \subset \alts \subseteq \allalts$, $\lato[\pelem{A}][A]$.
+	\item[\laxiom{Cycl}] For any cyclic profile $\pcycl{S}$, the only reasonable set of winners is $\allalts$: for all $m$-cycles $S$, $\lato[\pcycl{S}][\allalts]$.
+	\item[\laxiom{Canc}] If all pairs of alternatives $(a, b)$ are such that $a$ is preferred to $b$ as many times as $b$ is to $a$, then the set of winners must be $\allalts$: for all $\prof$ such that $\delta^\prof_{ab}=0$ for all $(a, b) \in {\ordalts}$, $\lato[\prof][\allalts]$.
+	\item[\laxiom{Reinf}] Reinforcement, as defined earlier (cf.~\cref{def:reinf}).
+	\item[\laxiom{Reinf-sub}] 
+Subtracting a profile with a full winner-set does not change the outcome.
+For all $\prof, \prof', \emptyset \subset A \subseteq \allalts$: $(\lato[\prof \oplus \prof'][A] ∧ \lato[\prof'][\allalts]) \rightarrow \lato[\prof][A]$.%TODO , N_{\prof} \cap N_{\prof'} = \emptyset
+	\item[\laxiom{Simp}] If a profile consists of a repetition of the same sub-profile, then the sub-profile must have the same winners (i.e., we can simplify): for all $\prof$, $2 ≤ k \in \N$, $\emptyset \subset A \subseteq \allalts$, $\lato[k \prof][A] \rightarrow \lato[\prof][A]$.
+\end{description}
+We denote our \laxiomatisation{} by~$J_B$, the set of all six sets of formulæ just defined.
+
+\begin{remark}
+	Observe that \laxiom{Simp} and \laxiom{Reinf-sub} logically follow from \laxiom{Reinf}, i.e., they are in fact not required for the characterisation. % itself. 
+We introduce them nevertheless, as explained in \cref{rm:phrasingMatters}, because they can shorten proofs, and because we assume they will appear sufficiently intuitive to the reader of a proof %such proofs to be used 
+without requiring separate justification. % themselves.
+%Similarly, and following \cref{rm:reinfExpanded}, we could have modified \laxiom{Reinf} in order to further shorten the proofs.
+\end{remark}
+
+\subsection{An Example}
+\label{sec:BordaExample}
+Consider the set of alternatives $\allalts=\set{a, b, c, d}$ and a profile $\tprof$ composed of the two preference orders $(a, b, d, c)$ and $(c, b, a, d)$.
+%\begin{equation}
+%\prof =
+%\begin{array}{cc}
+%	a	&	c\\
+%	b	&	b\\
+%	d	&	a\\
+%	c	&	d
+%\end{array}.
+%\end{equation}
+Observe that Borda selects $\set{a, b}$ as winners for this profile. We will now build a proof grounded in $J_B$ of the claim $\lato[\tprof][\set{a, b}]$.
+
+The proof consists of two parts. First (steps \ref{step:winnersElem1}--\ref{step:winnersProfPrime} in this example), we define a profile $\prof'$ that is the sum of several profiles for which the winners are uncontroversial, either because of \laxiom{Elem} or because of \laxiom{Cycl}, and use this to argue that our Borda winners should win for $\prof'\!$. For our example, let $\prof_E = \pelem{\set{a, b}} \oplus 2 \pelem{\set{a, b, c}}$, $\prof_C = \pcycl{\left<a, d, c, b, a\right>} \oplus \pcycl{\left<a, b, d, c, a\right>}$, and $\prof' = \prof_E \oplus \prof_C$. Second (steps \ref{step:easyCancel}--\ref{step:end} in this example), we argue that $\prof'$ must have the same winners as $\tprof\!$. This works, because we also chose $\prof'$ in such a way that it has the same weighted majority graph as some multiple of $\tprof$. Indeed, step \ref{step:hardCancel} uses the fact that $\overline{4 \tprof}$ and $\prof'$ cancel (this can be verified manually by counting the number of wins for each pair of alternatives). Step~\ref{step:easyCancel} is valid, as any profile cancels with its inverse.
+
+\newcommand{\pagecheck}[1]% #1 = legnth to end of page
+{\ifvmode\vspace{-\parskip}\else\newline\fi% check for blank line between items
+\rule{0pt}{#1}\vspace{-#1}}
+% UE: don't remove empty line above, as that messes up line spacing in above paragraph (???)
+{\small%\begin{samepage}
+\begin{enumerate}
+	\item \label{step:winnersElem1} $\lato[\pelem{\set{a, b}}][\set{a, b}]$ (\laxiom{Elem}) \pagecheck{1cm}%
+	\item $\lato[\pelem{\set{a, b, c}}][\set{a, b, c}]$ (\laxiom{Elem})
+	\item $\lato[\pcycl{\left<a, d, c, b, a\right>}][\allalts]$ (\laxiom{Cycl})
+	\item \label{step:winnersCycl2} $\lato[\pcycl{\left<a, b, d, c, a\right>}][\allalts]$ (\laxiom{Cycl})
+	\item $((1) ∧ (2)) \rightarrow \lato[\prof_E][\set{a, b}]$ (\laxiom{Reinf})
+	\item $((3) ∧ (4)) \rightarrow \lato[\prof_C][\allalts]$ (\laxiom{Reinf})
+	\item $(\lato[\prof_E][\set{a, b}] ∧ \lato[\prof_C][\allalts]) \rightarrow \lato[\prof'][\set{a, b}]$ (\laxiom{Reinf})
+	\item \label{step:winnersProfPrime} $\lato[\prof'][\set{a, b}]$ (PR from 5--7)
+	\item \label{step:easyCancel} $\lato[4 \tprof \oplus \overline{4 \tprof}][\allalts]$ (\laxiom{Canc})
+	\item $(\lato[4 \tprof \oplus \overline{4 \tprof}][\allalts] ∧ \lato[\prof'][\set{a, b}]) \rightarrow \lato[4 \tprof \oplus \overline{4 \tprof} \oplus \prof'][\set{a, b}]$ (\laxiom{Reinf})
+	\item $\lato[4 \tprof \oplus \overline{4 \tprof} \oplus \prof'][\set{a, b}]$ (PR from 8--10)
+	\item \label{step:hardCancel} $\lato[\overline{4 \tprof} \oplus \prof'][\allalts]$ (\laxiom{Canc})
+	\item $(\lato[4 \tprof \oplus \overline{4 \tprof} \oplus \prof'][\set{a, b}] ∧ \lato[\overline{4 \tprof} \oplus \prof'][\allalts]) \rightarrow \lato[4 \tprof][\set{a, b}]$ (\laxiom{Reinf-sub})
+	\item $\lato[4 \tprof][\set{a, b}]$ (PR from 11--13)
+	\item $\lato[4 \tprof][\set{a, b}] \rightarrow \lato[\tprof][\set{a, b}]$ (\laxiom{Simp})
+	\item \label{step:end} $\lato[\tprof][\set{a, b}]$ (PR from 14 \& 15)\qedhere
+\end{enumerate}%\end{samepage}
+}
+
+Simplifications are possible. For instance, step~\ref{step:winnersProfPrime} could be presented to a user as following directly from steps~\ref{step:winnersElem1}--\ref{step:winnersCycl2}, together with \laxiom{Reinf} and basic propositional reasoning.
+
+\subsection{The General Algorithm}\label{sec:general-algorithm}
+%NB beta is used before definition!
+We now define an algorithm, \emph{Borda-expl}, which, given any profile $\tprof$, builds a proof grounded in $J_B$ of the claim $\lato[\tprof][f_B(\tprof)]$, i.e., a justification for the Borda outcome. Our proofs all have the same structure as in the example above; only the concrete profiles used along the way differ. Let us first define the intermediate variables we will need, namely a natural number~$r$, a profile $\prof_E$ that is the sum of several elementary profiles, and a profile $\prof_C$ that is the sum of several cyclic profiles. We will define those variables such that, for $\prof' = r\prof_E \oplus \prof_C$, $(i)$~$\beta^{\prof_E} = \beta^{\tprof}$ and $(ii)$~$\delta^{rm\tprof} = \delta^{\prof'}$. %, although we do not prove that this holds in this article. 
+The proofs of these equivalences are given in the full paper \citep{cailloux_arguing_2016}. The reason we want these two properties to hold is, intuitively, that we want $\prof_E$ to have the same winners as $\tprof$, and the second property is needed for the cancellation step (step 12 of our example). We will then show how these intermediate variables are used to produce proofs.
+
+We need the concept of a beta vector in order to define $\prof_E$. Define a beta vector as a vector mapping alternatives from $\allalts$ to rationals, with the condition that it sums to zero. The set of beta vectors, denoted by $\betasp$, together with addition and multiplication by a rational defined in the natural way, is a vector space. We write $β^{\prof} = \left<β^{\prof}_a, a \in \allalts\right>$ for the beta vector corresponding to a profile $\prof$, where $β^{\prof}_a$ denotes the beta score of $a$ in $\prof$. The beta vector corresponding to the null profile is defined as the zero vector in $\betasp$ (that we also write $\zerov$, abusing notation).
+
+Name alternatives $a_1, a_2, \ldots, a_m$ by decreasing beta score in $\tprof$, thus $β^{\tprof}_{a_1} ≥ β^{\tprof}_{a_2} ≥ \ldots ≥ β^{\tprof}_{a_m}$. Define $\prof_E = \bigoplus_{i=1}^{m-1} \frac{β^{\tprof}_{a_i} - β^{\tprof}_{a_{i+1}}}{2} \pelem{\set{a_1, \ldots, a_i}}$.
+\begin{remark}
+This definition of $\prof_E$ is legal as the coefficients are natural numbers: $(β^{\tprof}_{a_i} - β^{\tprof}_{a_{i+1}})$ is even because, depending on $m$, either all beta scores are even, or all are odd (as may be seen by revisiting Remark~\ref{rem:beta-borda}).
+%Indeed, let $n$ be the number of voters and recall that $m$ is the number of alternatives. The beta score, for a given voter, is $b-(m-1-b)=2b-(m-1)$, where $b$ is the Borda score of that same voter. Thus, the total beta score is twice the total Borda score minus $n(m-1)$.
+\end{remark}
+
+We now have to define $\prof_C$. For this we need a specific set $\allH$ of $m$-cycles, whose (somewhat cumbersome) definition is as follows.
+
+Let $z$ denote the least alternative in $\ordalts$.
+For $(t, u) \in \increas$, define $S^{tu}$ as the $m$-cycle constituted by all alternatives that are in between $t$ and $u$ in $\ordalts$ (in the order they come in $\ordalts$), followed by $t$, followed by $u$, followed by all alternatives that come after $u$ in $\ordalts$ except $z$ (in the order they come in $\ordalts$), followed by all alternatives that come before $t$ (in the reverse order of the order they come in $\ordalts$), followed by $z$. Let $\allH$ be the set of $m$-cycles $\{S^{tu}, (t, u) \in \increas\}$. As an illustration, with $\allalts = \{a, b, c, d\}$, we would obtain $\allH = \{S^{ab}, S^{ac}, S^{bc}\}$, with $S^{ab} = \left<a, b, c, d, a\right>$, $S^{ac} = \left<b, a, c, d, b\right>$, and $S^{bc} = \left<b, c, a, d, b\right>$.
+
+Because of the way $\allH$ is defined, it appears that it is always possible to find rationals $\left<q_S, S \in \allH\right>$ that solve the linear system of equations $\delta^{m \tprof} = \delta^{\prof_E} + \sum_{S \in \allH} q_S \delta^{\pcycl{S}}$. (This is proved in the full paper \citep{cailloux_arguing_2016}.) Because $\delta^{\pcycl{S}} = -\delta^{\pcycl{-S}}$, where $-S$ denotes the inverse cycle of $S$, we can then choose coefficients $q_S$ that are all non-negative. Then, it remains only to define $r$ as the smallest strictly positive integer such that $\Set{r q_S, S \in \allH}$ are all natural numbers, and to define $\prof_C = \bigoplus_S r q_S \pcycl{S}$. Finally, define $\prof' = r \prof_E \oplus \prof_C$.
+
+The Borda-expl algorithm produces the following proof, given a profile $\tprof$ and the intermediate variables $r, \prof_E, \prof_C, \prof'$ as defined above. We define the proof informally by referring to the corresponding steps appearing in our example. The order of the steps will always be the same as in the example, though the step numbers might be shifted compared to our example. We refer to the step numbers of the example with numbers between quotes, e.g., “1, 2” indicates that the equivalent steps are numbered 1 and 2 in our example.
+
+Assume first that $\prof_E$ is non-null (thus, $\prof'$ is non-null as well). Let $W$ designate the set of winners that must be associated to $\prof_E$ in order to satisfy \laxiom{Elem} and \laxiom{Reinf}. Observe that $W = f_B(\tprof)$, because $β^{\prof_E} = β^{m \tprof}$. Assume further that $\prof_C$ is non-null. The proof is as follows.
+\begin{description}[labelwidth=\widthof{\bfseries “9, 10, 11”},align=right]
+	\item[“1, 2”] It starts with the steps about the elementary profiles $\pelem{\set{…}}$ that appear (with non-zero coefficients) in $\prof_E$. There are at most $m-1$ such steps.
+	\item[“3, 4”] Then come the steps about the cyclic profiles $\pcycl{\left<…\right>}$ that appear (with non-zero coefficients) in $\prof_C$. There are at most $\binom{m-1}{2}$ such steps, the number of cycles in $\allH$.
+	\item[“5”] Then one step concludes that $\prof_E$ must have $W$ as winners
+	\item[“6”] One step concludes that $\prof_C$ has winners $\allalts$.
+	\item[“7, 8”] Two steps conclude that $\prof'$ must have $W$ as winners.
+	\item[“9, 10, 11”] The following three steps use the fact that $rm\tprof$ and its inverse cancel (recall that any profile cancels with its inverse), and conclude that $rm\tprof \oplus \overline{rm\tprof} \oplus \prof'$ must have $W$ as winners.
+	\item[“12”] The main point of the proof comes then, which says that $\overline{rm\tprof}$ and $\prof'$ cancel.
+	\item[“13, 14”] The next steps obtain that $rm\tprof$ must be associated to $W$, using \laxiom{Reinf-sub}.
+	\item[“15, 16”] It only remains to use \laxiom{Simp} to obtain the result.
+\end{description}
+Still assuming that $\prof_E$ is non-null, if $\prof_C$ is null, the proof is identical with only the steps about $\prof_C$ skipped (“3, 4, 6”). If $\prof_E$ is null and $\prof_C$ is non-null, then $f_B(\tprof)$ must equal $\allalts$, because $\beta^{\prof_E} = \zerov = \beta^{\tprof}$. Then, the steps about $\prof_E$ (“1, 2, 5”) may be skipped, as well as the steps about the winners of $\prof'$ (“7, 8”), because $\prof' = \prof_C$ in that case and thus those steps would be redundant with “6”. Finally, if both $\prof_E$ and $\prof_C$ are null, then the proof has just one step: from $\delta^{\prof'} = \zerov = \delta^{rm\tprof}$ we see that we can apply \laxiom{Canc} directly on $\tprof$.
+
+Observe that this algorithm proves that our axioms indeed define uniquely the Borda rule: their acceptance force acceptance of the Borda winners for every possible input profile.
+
+%The maximal number of steps, given a profile $\tprof$ with $m$ alternatives, is thus $m\frac{m-1}{2}+12$.
+
+%\subsection{Comparison with Young's Axiomatisation}\label{sec:young-comparison}
+%This instantiation of our framework is based on the axiomatisation of the Borda rule given by \citet{young_axiomatization_1974}. Young used the axioms of \emph{neutrality}, \emph{faithfulness}, \emph{cancellation}, and \emph{reinforcement}. We chose a slightly different set of axioms to make the argument more concrete and the proofs built by our algorithm shorter. In particular, we included elementary and cyclic profiles in the axioms themselves (rather than make them follow from the axioms of Young).
+
+%Young's work also inspired our approach to proving correctness of our algorithm. \Cref{thm:betaMatches,thm:inKernel}, the idea of using the spaces $\deltasp$, $\betasp$ and the transformation $\betatr$ are due to him. The novelty in our approach is that our vectors can be defined from a restricted set of cyclic profiles, whereas Young uses a more general construction. 
+%Thus, the results specific to the space of cyclic profiles (the construction and exploitation of $\allH$ as done in \cref{thm:rhoSpans}) are new.%say: about?
+
+\section{Beyond Outcome Justification}\label{sec:argumentation}
+
+In this section we briefly explore additional opportunities for putting our general framework to use and sketch how it may be applied to argue about voting rules in other ways than simply justifying a given outcome.
+
+\subsection{Types of Arguments}
+Proofs of claims %regarding election outcomes 
+may be used in various ways to argue in favour of one voting rule or to attack another rule. There are clear links with argumentation theory \citep{BesnardHunter2008}, which could be further developed to arrive at a fully fledged framework for arguing about voting rules. Here we only define a few categories of arguments we can create in our framework. %Some of these will be illustrated in the second part with the Borda rule.
+%
+%\begin{definition}[Argument]
+%        An argument grounded in $J$ is a pair $(\text{\textit{claim}},\text{\textit{proof}})$, where $J$ is a consistent l-axiomatisation, \emph{claim} is a uni-profile clause 
+%%(thus of the form 
+%$\latoin[\prof][α]$, %for some $\prof$ and $α$), 
+%and \emph{proof} is a natural deduction proof of the claim grounded in~$J$.
+%\end{definition}
+%
+%Such an argument tries to convince the reader that the set of winners must be selected from among $α$. It does so based on the postulate that the reader accepts the axioms in $J$. Indeed, the argument provides a proof that the claim follows from the acceptance of $J$.
+%
+In the context of a voting rule $f$, a proof for a claim $\latoin[\prof][α]$, saying that in profile $\prof$ the set of winners should be selected from $α$, can constitute different types of arguments:
+\begin{itemize}[noitemsep]
+        \item a \emph{partial justification} for $f$ when $f(\prof) \in α$;
+        \item a \emph{full justification} for $f$ on $\prof$ when $α=\set{f(\prof)}$;
+        \item an \emph{attack} against $f$ when $f(\prof) \notin α$.
+\end{itemize}
+
+An argument may belong to more than one of these categories, e.g., it may simultaneously be a justification for some rule and an attack against some other rules.
+
+An argument can also attack an \laxiomatisation{} instead of a specific voting rule. A system using an \laxiomatisation{}~$J$ could establish that $J'$ is incompatible with $J$ (meaning that voting rules conforming to $J$ necessarily give different results in some cases from rules conforming to $J'$) and, assuming that the user will favour $J$ over $J'$ when realising that they are incompatible, could thus argue by simply giving an example illustrating the incompatibility. It is then up to that system to choose its example as wisely as possible. 
+%This will be illustrated in \cref{sec:defendBordaAgainstCond}.
+Formally, an attack against $J'$ by $J$ consists of two proofs, one of $\latoin[\prof][α]$ grounded in $J$ and one of $\latoin[\prof][α']$ grounded in $J'$, for some profile $\prof$ and some sets $α$ and $α'$ with $α \cap α' = \emptyset$. 
+%of an argument grounded in $J$ and claiming $(\prof, α)$ and an argument grounded in $J'$ and claiming $(\prof, α')$, for some $α'$ such that $α \cap α' = \emptyset$. 
+An attack against $J'$ is also an attack against any rule $f'$ conforming to~$J'$.
+
+
+\subsection{Attacking and Defending Borda}
+As an illustration, % of other kinds of arguments, 
+we present here, first, an argument that could be given against Borda, namely, that it does not satisfy the Condorcet property. We then also show how to defend Borda against this argument by producing a counter-argument to the Condorcet argument.
+
+%\subsubsection{Attacking Borda using Condorcet}
+%We describe now an argument in favour of Condorcet rules and against Borda.
+
+Consider $J_C = \Set{\laxiom{Cond}}$, including only the \txtlaxiom{} saying that, if there is a Condorcet winner, it must be returned as the sole winner. % (see \cref{def:cond}). 
+Now take any profile with a Condorcet winner
+%, where it is intuitively appealing that the Condorcet winner should win, and 
+where Borda does not select that Condorcet winner. For example, take $\allalts=\set{a, b, c}$ and $\prof$ defined as follows:
+\begin{equation}
+\prof = 
+\begin{array}{ccccc}
+        b       &       b       &       a       &       a       &       a\\
+        c       &       c       &       b       &       b       &       b\\
+        a       &       a       &       c       &       c       &       c
+\end{array}.
+\end{equation}
+
+Although $a$ is the Condorcet winner, Borda shamelessly selects $\set{b}$. Thus, an attack against Borda can be built by putting forward the claim $\lato[\prof][\set{a}]$ and its (trivial) proof grounded in $J_C$, whilst observing that this contradicts Borda’s choice.
+
+%\subsubsection{Defending Borda against Condorcet}
+%\label{sec:defendBordaAgainstCond}
+As a defence, a system arguing for Borda may give a justification for choosing $\set{b}$ using its own \laxiomatisation{}, by giving an argument for $\lato[\prof][\set{b}]$ grounded in $J_B$ as computed by Borda-expl. But this is unlikely to be convincing: such an attack rather calls for a more specific response. The system could also counter-attack by saying that we do not want to follow Condorcet in general, by using Fishburn’s argument. Define $J'_B$ as the set of \txtlaxiom{}s for Borda described above, together with \laxiom{FvsC}, the Fishburn-versus-Condorcet \txtlaxiom{} (see \cref{def:fvsc}). An attack against $J_C$ can now be produced by giving a proof grounded in $J'_B$ for $\lato[\prof_F][\set{a}]$, together with a proof grounded in $J_C$ for $\lato[\prof_F][\set{w}]$. This shows the incompatibility between these two \laxiomatisation{}s.
+
+\section{Conclusion and Related Work}\label{sec:conclusion}
+
+% SUMMARY OF RESULTS
+We have developed a general logic-based framework for representing arguments in favour of or against specific election outcomes. While these arguments can be based on general axioms familiar from social choice theory, when actually used, they apply to concrete instances of elections, thereby making them understandable to non-experts. We have also devised a practical algorithm for generating the arguments required to justify the election outcome selected by the Borda rule, for any given profile of preferences.
+%As we have illustrated, the framework we have presented here enables us to integrate some of the arguments proposed by various researchers in favour of their favourite voting rule, or against some voting rule. It also facilitates systematic approaches of justifying election outcomes using specific rules, although specific algorithms have to be developed in order to proceed effectively. 
+%We have developed one such algorithm here, for the Borda rule.
+
+% RELATED WORK
+Related work has aimed at explaining or justifying recommendations \citep{bouyssou_conjoint_2005,keeney_decisions_1993,labreuche_general_2011, labreuche_explanation_2012} or outcomes of elections \citep{saari_explaining_1999, saari_decisions_2001}. However, these approaches are all based on specific ways of justifying decisions and propose no general framework capable of integrating different kinds of arguments, including in particular counter-arguments against their own claims.
+%Our contribution is inspired by the \emph{even swaps method}~\citep{bouyssou_conjoint_2005,keeney_decisions_1993} developed to elicit preferences of a decision-maker in the multiple criteria decision aiding field, and relates to work in that field~\citep{labreuche_general_2011, labreuche_explanation_2012} aiming at explaining the recommendations of produced models of preferences. Also related is Saari’s approach \citep{saari_explaining_1999, saari_decisions_2001} explaining the outcomes of voting rules. However, such approaches do not use logic-based languages and propose no general framework capable of integrating different kinds of arguments.
+%even swap no hyphen?
+
+% RELATED/FUTURE WORK: LOGIC AND AUTOMATED REASONING
+%As an alternative method, aimed at avoiding the need to develop rule-specific algorithms, one could take axioms proposed by some axiomatisation of some voting rule $f$ and translate them all into our language (assuming it is possible). Then, if the axiomatisation is complete (thus determining unequivocally a voting rule), by our completeness theorem, there must be a way of proving in our system that the outcome $f(\prof)$ follows logically from the axioms, given profile $\prof$. It would be interesting to search for powerful heuristics that permit to find such proofs. It is likely that the exploration space will turn out to be too vast to yield good results in difficult cases, but it might be that general systems can be developed for arguing about small instances. This direction would take our approach closer to 
+Our work is also related to
+existing work on logic and automated reasoning for social choice theory \citep{BrandtGeistAAMAS2014,EndrissLPT2011,TangLinAIJ2009}, aimed at automatically deriving theorems in social choice theory. However, to date work in that literature has not attempted to tackle the problem of justifying election outcomes.
+
+%Our results pave the way for several natural avenues for future work.
+% FUTURE WORK: OTHER TYPES OF ARGUMENTS
+%First, justifying election outcomes is one example for arguing about voting rules, but our general framework also provides the foundations for constructing and using \emph{other types of arguments}. Consider a voting rule~$f$. Suppose we are given a proof of a claim $\latoin[\prof][α]$ grounded in an \laxiomatisation{} $J$. We may think of this as an argument. If $α=\{f(\prof)\}$, then it is an argument that \emph{fully justifies} $f$ on $\prof$ (the scenario we focussed on in this paper). If $\{f(\prof)\}\inα$, then it is only a \emph{partial justification}. If $f(\prof)\notinα$, then it is an argument that \emph{attacks}~$f$. And if we also have a proof for $\latoin[\prof][α']$ grounded in some other \laxiomatisation{} $J'$ and if $α\capα'=\emptyset$, then  it is an argument that \emph{attacks}~$J'$. There are thus clear links with argumentation theory \citep{BesnardHunter2008} that could be further developed to arrive at a fully fledged framework for arguing about voting rules.
+
+% FUTURE WORK: EXPERIMENTS
+%Second, as our framework allows for presenting arguments to people outside the research area that produces these arguments, \emph{experimental studies} could be undertaken in order to compare the \emph{persuasiveness} of different arguments. This would be interesting from the social choice point of view, for the general study of rationality, as well as from the point of view of building reasoning systems that argue with humans.
+
+% UE: maybe this sounds too generic/bold ("we have a method for solving all problems")
+% FUTURE WORK: OTHER DOMAINS
+%Third, our proposal is conceptually not restricted to social choice theory and could likely be extended to \emph{other domains} where it is possible to build systematic arguments on concrete instances based on general principles.
+
+%\section*{Acknowledgments}
+%Part of this work was carried out while the first author was employed at the ILLC, University of Amsterdam, and then at the Université de technologie de Compiègne, France. It was supported by the Dutch Government through an NWO Free Competition Grant (No.\ 612.001.015), and funded in the framework of the Labex MS2T supported by the French Government through the programme “Investments for the future” managed by the National Agency for Research (Reference ANR-11-IDEX-0004-02), respectively.
+  
+\setlength{\bibsep}{2pt}
+{\small\bibliography{arguing,zotero}}
+
+\begin{contact}
+Olivier Cailloux\\
+Université Paris-Dauphine\\
+PSL Research University\\
+CNRS, UMR 7243, LAMSADE\\
+75016 Paris, France\\
+\email{olivier.cailloux@dauphine.fr}
+\end{contact}
+
+\begin{contact}
+Ulle Endriss\\
+Institute for Logic, Language and Computation\\
+University of Amsterdam\\
+P.O.\ Box 94242\\
+1090 GE Amsterdam, The Netherlands\\
+\email{ulle.endriss@uva.nl}
+\end{contact}
+\end{document}
+\clearpage
+\section*{TODO}
+\begin{enumerate}
+\item Subscripts sometimes look ugly (too far apart), e.g., for $U_\prof$ or $v_f$. But ok in other cases, e.g., $\prof_1$. Not sure why. This problem still persists.
+%\item I put the two big proofs in small font, because then most steps fit into a single line. But this somehow messes up the paragraphs above them (spacing between lines is too small). Very mysterious. --- solved by inserting empty line (but still mysterious!)
+\item Try to reorganise Figure 3 to save space.
+\end{enumerate}
+
+%\end{document}
+
+\appendix
+\section{Anonymity}
+Given that the \txtlaxioms{} used in \cref{sec:borda} define the Borda rule uniquely, it is clear that these axioms imply anonymity. Let us show how this fact is derived from our \laxiomatisation{} of Borda. More generally, start with two profiles $\prof_1, \prof_2$ that have the same weighted majority graphs; let’s prove that $f_B(\prof_1) = f_B(\prof_2)$. We define $\tprof = \prof_1$ and $\prof' = \prof_2$ and simply apply (a simplification of) Borda-expl, for any given $f_B(\prof_1)$, with some steps omitted. We use the fact that $\prof'$ and $\tprof$ inverted cancel. The numbers relate to the steps in \cref{sec:BordaExample}.
+\begin{enumerate}
+	\item[\ref{step:winnersProfPrime}] $\lato[\prof'][f_B(\prof')]$ (given)
+	\item[\ref{step:easyCancel}] $\lato[\tprof \oplus \overline{\tprof}][\allalts]$ (\laxiom{Canc})
+	\item[11.] $\lato[\tprof \oplus \overline{\tprof} \oplus \prof'][f_B(\prof')]$ (PR, \ref{step:winnersProfPrime}, \ref{step:easyCancel}, \laxiom{Reinf})
+	\item[\ref{step:hardCancel}] $\lato[\overline{\tprof} \oplus \prof'][\allalts]$ (\laxiom{Canc})
+	\item[14] $\lato[\tprof][f_B(\prof')]$ (PR, 11, \ref{step:hardCancel}, \laxiom{Reinf-sub})
+\end{enumerate}
+
+\section{TODO}
+Perhaps compress the arg-proofs by integrating PR steps with the conclusion, as in section about Anonymity (above), I think it makes the arg-proofs much more readable.
+
+Consider adding the remark about the disjoint sets of voters (below) in Borda-expl.
+
+Check necessity of our l-axioms (except those specifically described as redundant) (see below).
+
+\section{Disjoint sets of voters in Borda-expl}
+We assume that all intermediate profiles constructed for the argument are defined on disjoint sets of voters so that we can apply our \txtlaxioms. In the example, assuming $\tprof$ is defined using voters $\set{1, 2}$, we define $4\tprof$ on voters $1$ to $8$; $\overline{4\tprof}$ on voters $9$ to $16$; $\prof_E$ on voters $17$ to $22$; $\prof_C$ on voters $23$ to $30$ (and hence $\prof'$ is defined on voters $17$ to $30$, for example).
+
+\section{Necessity of laxioms}
+Without Elem, the constant rule $f(\prof) = \allalts$ fits.
+
+Let’s define a voting rule $f$ that satisfies \laxiom{Reinf}, \laxiom{Canc}, \laxiom{Elem} and not \laxiom{Cycl}. Consider $m ≥ 3$ (for $m = 2$ \laxiom{Cycl} follows from the other axioms). Let $\allH$ denote the set of $m$-cycles as defined in \cref{thm:rhoSpans}. Consider any profile $\tprof$. Define $\prof_E$ as the sum of elementary profiles (possibly null) defined in our Borda-expl algorithm. Thanks to \cref{thm:existsRC}, we can write $\delta^{m \tprof} = \delta^{\prof_E} + \sum_{S \in \allH} q_S \delta^{\pcycl{S}}$. Furthermore, the coefficients $q_S$ are unique, as the set of delta vectors $\rho = \Set{\delta^{\pcycl{S}}, S \in \allH}$ forms a basis for $\kernel{\betatr}$. Define $S_1$ an arbitrary cycle in $\allH$, $a, b$ any two alternatives in $\allalts$. Define $f(\prof) = \set{a}$ if the decomposition has $q_{S_1}$ strictly positive, $f(\prof) = \set{b}$ if the decomposition has $q_{S_1}$ strictly negative, and $f(\prof) = f_B(\prof)$ otherwise.
+
+$f$ satisfies \laxiom{Canc}: if $\prof$ cancels, the decomposition has only zero coefficients. It satisfies \laxiom{Elem} and not \laxiom{Cycl}. To show that it satisfies \laxiom{Reinf}, take $\prof_1$ and $\prof_2$ such that $f(\prof_1) \cap f(\prof_2) ≠ \emptyset$, define $\prof = \prof_1 \oplus \prof_2$, let’s prove that $f(\prof) = f(\prof_1) \cap f(\prof_2)$. Observe that the coefficients $q_S$ corresponding to $\prof$ are the sum of the coefficients $q_S^1$ and $q_S^2$ corresponding to $\prof_1$ and $\prof_2$, for each $S$. If $q_{S_1}^1 = q_{S_1}^2 = 0$, the case is clear. Assume $q_{S_1}^y ≠ 0$ for some $y \in \set{1, 2}$. Observe that $q_{S_1}^1$ and $q_{S_1}^2$ can’t have strictly opposite signs as in that case $f(\prof_1)$ and $f(\prof_2)$ do not intersect. Thus, $q_{S_1}$ has the same sign as $q_{S_1}^y$, and $f(\prof_y) = f(\prof)$ and are singletons, satisfying \laxiom{Reinf}.
+\end{document}
+
+\section{Necessity of axioms: missed}
+Without Cycl, the rule that takes all undominated alternatives as winners satisfy the other axioms (I think). NO, also satisfies Cycl.
+
+\textbf{No}. The rule that takes $f_b$ if profile is not $k-cyclic$ and 1st voter choice otherwise. Profile is $k$-cyclic if it contains a repetition of the same cycle. NO : take a non k-cyclic profile + a k-cyclic profile where $f(R_1) = \set{a, b}$ and $f(R_2) = {a}$, obtain $f_B(R_1) = \set{a, b}$ and $f_B(R_2) = \allalts$ and $f(R_1 + R_2) = f_B(R_1 + R_2) = {a, b}$, contradicting Reinf.
+
+\textbf{Simple but no}. Define an $m$-cycle $S_1$. Define $f$ taking the Borda winner, or $\set{a}$ if the profile contains $\pcycl{S_1}$ and the Borda winners of other components of the profile all contain $\set{a}$. NO : consider $\pcycl{S_1} \oplus \pinv[\pcycl{S_1}]$, \laxiom{Cycl} mandates $\allalts$ but $f$ takes $\set{a}$. More generally, if $f$ takes $A_1$ for $\pcycl{S_1}$ then $f$ must take $A_2 \subseteq \allalts \setminus A_1$ for $\pinv[\pcycl{S_1}]$ otherwise it contradicts \laxiom{Cycl}  or \laxiom{Reinf} on $\pcycl{S_1} \oplus \pinv[\pcycl{S_1}]$.
+
+\textbf{Try complex}. Define $a$ an arbitrarily chosen alternative in $\allalts$. In order to define $f(\prof)$, we will split $\prof$ into so-called components. We say that $\pcycl{S}$ is a component of $\prof$ iff all orders of $\pcycl{S}$ are represented in $\prof$. Determine all cyclic profiles being components of $\prof$. The last component, $\prof'$ (possibly null), is defined as all the rest: the preference orders of $\prof$ that do not form a complete cyclic profile. Associate to each component $\pcycl{S}$ of $\prof$ the singleton set containing the alternative following $a$ in $S$, associate $f_B(\prof')$ to $\prof'$ if $\prof'$ is not null. Define $f(\prof)$ as the intersection of all sets associated to each component of $\prof$ if that intersection is not empty, otherwise, define $f(\prof) = f_B(\prof)$. For example, $f(\pcycl{S_1}) = \set{b}$ if $S_1 = \left<a, b, c, a\right>$.
+
+NO. Define $\prof_3 = \restr{\pcycl{S_1}}{\set{1, 2}} \oplus \restr{\pcycl{S_2}}{\set{1, 2}}$, $\prof_1 = \prof_3 \oplus \pcycl{S_1}$, $\prof_2 = \restr{\pcycl{S_1}}{\set{3}} \oplus \restr{\pcycl{S_2}}{\set{3}}$. Because of \laxiom{Canc} and \laxiom{Reinf}, we must have $f(\prof_1 \oplus \prof_2) = f(\pcycl{S_1}) = \set{b}$, and we have $f(\prof_1) = \set{b}$ and $f(\prof_2) = \allalts$, but $f(\prof_1 \oplus \prof_2) = f_B(\prof_1 \oplus \prof_2) = \allalts$.
+
+Observe that $f(\prof) ≠ f_B(\prof)$ implies $f(\prof)$ is a singleton.
+
+Let’s prove that $f$ satisfies \laxiom{Canc} for the case of three alternatives. Take $\prof$ which cancels, let’s show $f(\prof) = \allalts$. If $f(\prof) = f_B(\prof)$, that’s clear. Otherwise, $\prof$ has at least one cyclic profile as component. Say $\prof$ has $k$ copies of $\pcycl{S_1}$ as component where $S_1 = \left<a, b, c, a\right>$. Observe there’s only one other cycle when $m=3$, namely $S_2 = \left<a, c, b, a\right>$. Define $\prof'$ as $\prof$ where the orders composing $k \pcycl{S_1}$ have been removed. As $\prof$ cancels, $\prof'$ must have the same weighted majority graph than $k \pinv[\pcycl{S_1}]$. As can be manually checked in this small case, this can be done (for any $k$) only by including $\pcycl{S_2}$ in $\prof'$. Hence, $\prof$ is composed of $\pcycl{S_1}$ and $\pcycl{S_2}$, hence by definition of $f$ it equals $f_B(\prof) = \allalts$.
+
+\textbf{No}. If taking the intersection of everything and otherwise $\allalts$, consider $\prof_1 = \prof_E^1 + \pcycl{S_1}$ and $\prof_2 = \prof_E^2 + \pcycl{S_1}$, $W(\prof_E^1) = \set{b}$, $W(\prof_E^2) = \set{a}$, $f(\pcycl{S_1}) = \set{a}$, then $f(\prof_1) = \allalts$ and $f(\prof_2) = \set{a}$ but $f(\prof) = \allalts$ possible (probably).
+
+\textbf{No again.} If using the cycles only in case no elementary profile is there, we get $\prof_1 = \pcycl{S_1}$ and $\prof_2 = \pelem{\set{a, b}}$, $f(\prof_1) = \set{a}$, $f(\prof_2) = \set{a, b}$, which requires $f(\prof) = \set{a}$.
+
+\textbf{Still no.} If taking the intersection of everything and otherwise $\prof_E$ and if null $\allalts$, consider $\prof_1 = \pcycl{S_1} \oplus \pcycl{S_2}$ thus $f(\prof_1) = \allalts$, $\prof_2 = \pelem{\set{a, b}} \oplus \pcycl{S_3}$ where $f(\prof_2) = \set{a}$ and $f(\prof) = \allalts$ but it should be $\set{a}$.
+
+\section{Why the beta numbers match}
+About \cref{thm:betaMatches}, on our favourite example. Define $B_a^{\prof_E} = \beta_a^{\prof_E}/2$. Per definition of $\prof_E$ we have $B_a^{\prof_E} = \bigoplus_{i=1}^{m-1} (B_{a_i} - B_{a_{i+1}}) B_a^{\pelem{\set{a_1, \ldots, a_i}}}$. We use $B_a^{\pelem{A}} = m - \card{A}$. We want $B_a^{\prof_E} = 4 B_a^{\tprof}$.
+
+We have $B_a^{\prof_E} = (4 B_a - B_a) - (4 B_b - B_b) + (4 B_b - 2 B_b) - (4 B_c - 2 B_c) + (4 B_c - 3 B_c) - (4 B_d - 3 B_d)$, which equals by simplification $- B_a - B_b - B_c - B_d + 4 B_a$.
+
+Also, define $\gamma_a^{\prof_E}$ the Borda score of $a$ in $\prof_E$. Observe that $B_a^{\pelem{A}} = γ_a^{\pelem{A}} - (m-1)$.
+
+\section{Schwartz rule}
+Fishburn describes Schwartz’s function $f_S$ as follows. 
+
+Define $W_\prof$ as the strict majority win relation over $A_\prof$ given $\prof$.
+
+Define $x S_\prof y$ iff there are $x_1=x, x_2, \ldots, x_K=y$ in $A_\prof$ such that $x_1 W_\prof x_2, x_2 W_\prof x_3, \ldots, x_{K-1} W_P x_K$, and there are no $z_1 = y, z_2, \ldots, z_J = x$ in $A_\prof$ such that $z_1 W_\prof z_2, z_2 W_\prof z_3, \ldots, z_{J-1} W_\prof z_J$.
+
+$f_S(\prof) = \set{x \in A_\prof \suchthat \nexists y \in A_\prof \mid y S_\prof x}$.
+
+Fishburn also proposes the following description. Call $B \subseteq A_\prof$ externally undominated iff $\nexists x \in A_\prof \setminus B, y \in B \suchthat x W_\prof y$. Then $f_S(\prof)$ is the union of all minimal (in the sense of inclusion, not considering empty sets) externally undominated subsets of $A_\prof$.
+
+Axiom S3 (Weak dominance): $\forall \prof: \nexists a \in A_\prof \setminus f_S(\prof), b \in f_S(\prof) \suchthat a W_\prof b$.
+
+Axiom S4 (Narrowness). $\forall B \subseteq f_S(\prof): [\nexists a \in f_S(\prof) \setminus B, b \in B \suchthat a W_\prof b] \Rightarrow [\nexists b \in B, a \in f_S(\prof) \setminus B \suchthat b W_\prof a]$.
+
+Axiom S5 (Reducibility). $\forall \emptyset \subset B \subseteq A_\prof: [\nexists a \in A_\prof \setminus B, b \in B \suchthat a W_\prof b] \Rightarrow [\exists b \in B \suchthat b \in f_S(\prof)]$.
+
+On example 2.2, Schwartz would select $\set{a, b, c}$, different than Borda.
+
+\section{The rest}
+Available profiles (e.g. from past elections) $P$. Choose the simplest profile to argue in favour of $f$.
+
+Link with published axiomatizations?
+
+What do we need so that any two systems $G, G'$ can always give at least one argument given any profile where the rules differ? What do we need so that there is always an undercut?
+
+Example where add IIA to other transorms, bringing dictatorship, yielding an argument?
+
+Take a rule that is less resolute than another one. The only thing it can say is: you are too resolute.
+
+Produce more resolute rules from two rules, by adding a tie breaking rule? (Bucklin and break ties.)
+
+\section{Reasoning with properties}
+Take a set $P$ of properties about voting rules. Define $\Omega_P = \set{f \suchthat f \text{ voting rule which satisfies } \set{p \in P}}$. Define $F_P(\prof) = \cup_{f \in \Omega_P} f(\prof)$, the possible winners considering $P$ for $\prof$. Define $F^\text{nec}_P(\prof) = \cap_{f \in \Omega_P} f(\prof)$ the necessary winners.
+
+Consider a system $\left<f, J\right>$ having its reasonableness functions $J$ corresponding to the properties $P$. Then we know that $f \in \Omega_P$ but $f$ is not necessarily fully characterized by $J$ (or equivalently, $P$). However we can in some cases produce reasonings in favour of $f$ against some $f' \notin \Omega_P$.
+
+For any $\prof$, there exists a reasoning using $J$ for the claim $(\prof, \powerset{F_P(\prof)})$, thus reasoning saying that the set of winners must be a subset of $F_P(\prof)$. There could also exist more specific reasonings, thus claiming $(\prof, α)$ for some $α \subset \powerset{F_P(\prof)}$.
+
+Now assume we want to produce an argument for $f$ against some $f' \notin \Omega_P$. Consider $\prof$ such that $f(\prof) ≠ f'(\prof)$. There exists such a reasoning if $F^\text{nec}_P(\prof) \not\subseteq f'(\prof)$ or if $f'(\prof) \not\subseteq F_P(\prof)$. There could also exist a reasoning even if $F^\text{nec}_P(\prof) \subseteq f'(\prof) \subseteq F_P(\prof)$, but that is not guaranteed.
+
+Example : take $P$ containing only the Condorcet condition. Consider $\prof$ having a Condorcet winner and where $f'(\prof)$ does not select the Condorcet winner. For any Condorcet $f$, there exists an argument against $f'$ using that profile.
+
+\section{Copeland VS Borda}
+\subsection{A Condorcet winner}
+Consider $\allalts=\set{a, b, c}$ and a profile $\prof$ defined as:
+\begin{equation}
+\prof = 
+\begin{array}{ccc}
+	a	&	b	&	b\\
+	c	&	a	&	a\\
+	b	&	c	&	c
+\end{array}.
+\end{equation}
+$b$ is the Condorcet winner, selected by Copeland. Borda shamelessly selects $\set{a, b}$. Copeland’s choice is justified using the Condorcet principle. (See whether possible to weaken it?)
+
+\subsection{Another example}
+Consider $\allalts=\set{a, b, c, d}$ and a profile $\prof$ defined as:
+\begin{equation}
+\prof = 
+\begin{array}{ccc}
+	a	&	b	&	c\\
+	d	&	c	&	a\\
+	b	&	a	&	b\\
+	c	&	d	&	d
+\end{array}.
+\end{equation}
+Borda selects $\set{a}$. Majority winners: $(a, b); (c, a); (a, d); (b, c); (b, d); (c, d)$. Copeland selects $\set{a, b, c}$. Fishburn also selects $\set{a, b, c}$ as $\set{a, b, c} \mathrel{F_p} d$. Kemeny also selects $\set{a, b, c}$.
+
+Selecting $a$ is compatible with CHMPS2 (because Black selects $a$). Q : is selecting $a$ incompatible with Schwartz (together with the other properties)?
+
+\section{Plurality}
+We define the Plurality system $G'=\left<f', J'\right>$, where $f'$ is the Plurality rule, and the set of reasonableness functions has the following functions. Compared to the functions used by the Borda system, it does not include cancellation but adds reduction and extension.
+\begin{description}
+%	\item[elem]
+%	\item[cycl] (?)
+%	\item[cons]
+%	\item[cons-sub] (?)
+%	\item[simp] (?)
+	\item[reduc] reduction: when an alternative is dominated by another one in a profile, removing it does not change the winners.
+	\item[ext] extension: adding a dominated alternative does not change the winners.
+\end{description}
+
+We will build undercut arguments for Plurality system against the reasonings used by our Borda system. The argument shows that, if we add canc to the Plurality reasonableness functions, we get absurd results.
+
+\subsection{Plurality, simple example}
+Consider the following profile.
+\begin{equation}
+\prof =
+\begin{array}{ccc}
+	a	&	b\\
+	c	&	a\\
+	b	&	c
+\end{array}.
+\end{equation}
+Assume we produce an argument for the Borda system, claiming $(\prof, \set{\set{a}})$. We now produce an undercut argument for Plurality.
+
+Start with $\prof_0 =
+\begin{array}{cc}
+	a	&	b\\
+	b	&	a
+\end{array}
+$ has winners $a, b$. Add dominated $c$, obtain $\prof$, which must have the same winners $a, b$ because of “ext”.
+
+Now it is possible to find some cyclic profile $R_c$ such that $\prof_E + R_c$ and $\pelem{a}$ have same $D$ (using Borda reasoning, find $\pelem{a} + R_s = \prof_E$ and get $R_c = -R_s$). Now $f(\prof_E) = f(\prof_E + \pelem{a} + \overline{\pelem{a}} + R_c) = f(\pelem{a})$, thus $\pelem{a}$ has winners $a, b$. Absurd!
+
+%This should work when choosing $\prof_1$ equal to $\prof$ in the Borda reasoning? (Check with simple example though.)
+
+\subsection{Complicated example (cont.)}
+Now let us build an undercut argument for the same profile $\prof$ as in the complicated example above. We show that the function canc is not sound.
+
+Start with $\prof_0 =
+\begin{array}{ccc}
+	a	&	c\\
+	b	&	b\\
+	c	&	a
+\end{array}
+$, must thus have winners $a, c$ (how?). Add dominated $d$, thus reaching $\prof$, must have the same winners.
+
+\section{Reasoning by contradiction}
+\begin{definition}[reasoning tree by contradiction]
+A reasoning tree by contradiction is defined as a reasoning tree but with two differences. First, it is also allowed to use as one of the reasonableness functions the special function “contradiction” $c$. That function is defined as follows, denoting the root profile by $\prof_C$: $c(\emptyset, \prof_C) = \powerset{\allalts} \setminus α$. Thus when $\prof_C$ intervenes as a node in the tree, it is allowed to, reasoning by contradiction, negate the claim as a hypothesis, thus assume that the winners from $\prof_C$ are not in $α$. Second, the set of reasonable sets of winners corresponding to the root node must equal the emptyset instead of being a subset of $α$.
+\end{definition}
+
+\begin{example}[disjunction]
+\begin{align}
+	j1:&&f(\prof_1) = a &\Rightarrow f(\prof_2) = c,\\
+	j2:&&f(\prof_1) ≠ a &\Rightarrow f(\prof_2) = c.
+\end{align}
+Assume $j$’s are closed under contrapositions. We can then build a reasoning tree by contradiction for the claim that in $R_2$, $c$ must win.
+\end{example}
+
+\begin{example}[direct contradiction]
+\begin{align}
+	j1:&&f(\prof_1) = a &\Rightarrow f(\prof_2) = a,\\
+	j2:&&f(\prof_2) = b &\Rightarrow f(\prof_1) = a.
+\end{align}
+We build a reasoning tree by contradiction for the claim that in $R_2$, $b$ can’t win. Take $\prof_C = \prof_2$, $α = \powerset{\allalts} \setminus \set{b}$. Start with $f(R2) = b$ then obtain $f(R2) = a$ intersect with the first one, obtain empty.
+\end{example}
+
+\begin{example}[using a contradiction]
+\begin{align}
+	j1:&&f(\prof_1) = a &\Rightarrow f(\prof_2) = a,\\
+	j2:&&f(\prof_2) = b &\Rightarrow f(\prof_1) = a,\\
+	j3:&&f(\prof_2) ≠ b &\Rightarrow f(\prof_3) = a.
+\end{align}
+Obtain $f(\prof_3) = a$ as follows: $f(\prof_3) ≠ a \Rightarrow f(\prof_2) = b \Rightarrow f(\prof_1) = a \Rightarrow f(\prof_2) = a$. Intersect the last one with $f(\prof_2) = b$.
+\end{example}
+
+\begin{example}[cross disjunction]
+\begin{align}
+	j1:&&f(\prof_1) = a &\Rightarrow f(\prof_3) = \set{\set{a}, \set{b}},\\
+	j2:&&f(\prof_1) = \overline{a} &\Rightarrow f(\prof_3) = \set{\set{a}, \set{c}},\\
+	j3:&&f(\prof_2) = a &\Rightarrow f(\prof_3) = \set{\set{a}, \set{d}},\\
+	j4:&&f(\prof_2) = \overline{a} &\Rightarrow f(\prof_3) = \set{\set{a}, \set{e}}.
+\end{align}
+Obtain $f(\prof_3)=a$? Requires reasoning by contradiction for $f(\prof_3) = a \lor b \lor c$; another reasoning by contradiction for $f(\prof_3) = a \lor d \lor e$; finally join these two conclusions by intersection.
+\end{example}
+
+\section{Application with majority rules}
+We assume $\card{\allalts}=2$, $\allalts=\set{a, b}$.
+
+Compare $f_M$, the absolute majority rule to $f_Q$, the absolute qualified majority rule with quota 3/4. Systems $G_M=\left<f_M, T_M, E_M\right>$ and $G_Q=\left<f_Q, T_Q, E_Q\right>$.
+
+$T_M=\set{t_m}$ with $t_m$ cancelling equal number of votes for $a$ and $b$. $E_M$ has the two profiles for one voter.
+
+About $G_Q$, we could consider by default everybody win: we need a reason to exclude a winner. Thus for any rule, when $f(\prof)=\prof$, $\prof \in E$. (Not very convincing!)
+
+$E_Q$ has a profile with 100 votes for $a$ and 101 votes for $b$.
+
+$G_Q$ can give a rebuttal to $G_M$ corresponding to any of $G_M$’s arguments. Or, $G_Q$ can undercut these arguments.
+
+If we had arguments in favour of excluding a winner or including one, we could have transforms in $G_Q$ that say: we definitely have to take $a$ here ; we definitely can exclude $b$ here.
+
+\section{Vrac}
+A reasoning system $G$ is a tuple $\left<f, J\right>$.
+\begin{description}
+	\item[$f$] a voting rule.
+	\item[$J$] a set of reasonableness functions, coherent with $f$.
+\end{description}
+
+$\allsystems$ = set of reasoning systems.
+
+The first type of argument, a partial-justifying argument against $f'$ using $J$ (for some rule $f'$ and set of reasonableness functions $J'$), intuitively, claims that $f'$ is incompatible with some reasonableness functions in $J$.
+
+\begin{definition}[Partial-justifying argument]
+A partial-justifying argument against $f'$ using $J$ is a reasoning DAG grounded in $J$ and claiming $(\prof, α)$, for some $\prof$ and $α$ such that $f'(\prof) \notin α$.
+\end{definition}
+
+\begin{definition}[Rebuttal argument]
+A rebuttal argument for $G' = \left<f', J'\right> \in \allsystems$ against $f$ is a partial-justifying argument against $f$ using $J'$. It justifies why $f'(\prof)$ is a better choice, according to $G'$.
+\end{definition}
+
+\begin{definition}[Full-justifying argument]
+A full-justifying argument is a partial-justifying argument such that $α$ is a singleton.
+\end{definition}
+
+\begin{definition}[Undercut argument (outdated)]
+An undercut argument for $G' = \left<f', J'\right>$ against $G = \left<f, J\right>$ shows why some justification used by $G$ is unsound, according to $G'$. Claim: $j$ is unsound for some $j \in J$. Support: a reasoning DAG grounded in $J' \cup \set{j}$, having at the root $\prof_C$ such that for some $j' \in J'$, the possible winners for the result of the applied DAG does not intersect with $j'(\emptyset, \prof_C)$.
+\end{definition}
+
+\subsection{Strength of reasons}
+A system is up to now unable to represent how strong an individual may consider different reasonableness functions to be. To remedy this, a reasonableness function could be associated with a strength. We will sometimes consider a variant of a reasoning system, a reasoning system with strength, defined as $\left<f, J, s\right>$ where $s$ maps reasonableness functions to a number indicating the strength of that reasonableness function. We will use only two classes of strengths, therefore allowing us to separate those reasonableness functions that are particularly intuitive.
+
+It is important to realize that the axioms that characterize a voting rule $f$ are objective; whereas the set of reasonableness functions and the associated strengths associated with a rule in a system can be used to describe the subjectivity of a given individual.
+
+\subsection{Non-dictatorship}
+\begin{definition}[Non-dictatorship]
+As a slightly more complicated example, here is the non-dictatorship reasonableness function. Assume $\card{\allalts} ≥ 2$. Given a profile $\prof$, let $R_i^{\text{top}}$ designate the preferred alternative from voter $i$ in that profile. Given a set $S$ of profiles, let $C_i^S$ be the context where $i$'s choice is picked as winner for every $\prof \in S$: $C_i^S = \set{(\prof, R_i^{\text{top}}), \prof \in S}$. The non-dictatorship reasonableness function $d$ is defined as follows. $\forall \prof \in \allprofs, i \in N: d(C_i^{\allprofs \setminus \{\prof\}}, \prof) = A_\prof \setminus \{\prof_i^{\text{top}}\}$.\commentOC{Only makes sense when all profiles are on the same set of alternatives.}
+\end{definition}
+(This is indeed a function if universal domain holds, otherwise, depending on the definition of $\allprofs$ it could happen that $\exists i, j \in N, \prof \in \allprofs \suchthat \prof_i^{\text{top}} ≠ \prof_j^{\text{top}} \land \forall \prof' \in \allprofs \setminus \{\prof\}: \prof_i'^{\text{top}} = \prof_j'^{\text{top}}$, in which case we would need a more complex definition.)
+
+\subsection{Old examples of arguments or reasonings}
+The figure relating to the first example, old reasoning style.
+\begin{figure}
+	\begin{tikzpicture}[remember picture]
+		\path node[matrix of math nodes] (R1) {
+			a & b\\
+			b & c\\
+			c & a\\
+		};
+		\path (R1.east) ++(-2mm, 0) node[anchor=mid west] (j1v) {,};
+		\path (j1v.base east) node[anchor=base west] (j1) {dominance};
+		\path node[fit=(R1) (j1), left delimiter=(, right delimiter=)] (n1) {};
+		\path (n1.east) ++(3mm, 0) node[anchor=west] (P1) {$\set{\set{a}, \set{b}, \set{a, b}}$};
+
+		\path (R1.north -| P1.east) ++(15mm, 0) node[matrix of math nodes, anchor=north] (R2) {
+			a & c\\
+			b & b\\
+			c & a\\
+		};
+		\path (R2.east) ++(-2mm, 0) node[anchor=mid west] (j2v) {,};
+		\path (j2v.base east) node[anchor=base west] (j2) {symmetry};
+		\path node[fit=(R2) (j2), left delimiter=(, right delimiter=)] (n2) {};
+		\path (n2.east) ++(3mm, 0) node[anchor=west] (P2) {$\set{\set{a, b, c}}$};
+
+		\path ($(n1)+(0,-15mm)!0.5!(n2)+(0,-15mm)$) coordinate (n3x);
+		\path[draw, ->] (n1.south) -- ($(n3x)-(1mm, 0)$);
+		\path[draw, ->] (n2.south) -- ($(n3x)+(1mm, 0)$);
+		
+		\path (n3x) node[anchor=north] {\begin{tikzpicture}
+			\path node[anchor=north, matrix of math nodes] (R3) {
+				a & b & a & c\\
+				b & c & b & b\\
+				c & a & c & a\\
+			};
+			\path (R3.east) ++(-2mm, 0) node[anchor=mid west] (j3v) {,};
+			\path (j3v.base east) node[anchor=base west] (j3) {reinforcement};
+			\path node[fit=(R3) (j3), left delimiter=(, right delimiter=)] (n3) {};
+		\end{tikzpicture}};
+		\path (n3.east) ++(3mm, 0) node[anchor=west] (P3) {$\set{\set{a}, \set{b}, \set{a, b}}$};
+	\end{tikzpicture}
+\caption{An example of a reasoning graph.}
+\label{fig:informtree}
+\end{figure}
+
+The following examples must be re-written to account for the new definitions!
+
+\begin{example}[disjunction]
+Let $\allalts = \set{a, b, c}$. Consider any two distinct profiles $\prof_1$ and $\prof_2$ over these three alternatives (which profiles $\prof_1$ and $\prof_2$ are precisely is irrelevant to this example), and the two following properties of voting rules. $p_1: f(\prof_1) = \set{a} \Rightarrow f(\prof_2) = \set{b}$; $p_2: f(\prof_1) ≠ \set{a} \Rightarrow f(\prof_2) = \set{b}$. Satisfying these two properties requires for $f$ to select $\set{b}$ when given $\prof_2$. Let us see how this conclusion can be obtained using a reasoning DAG. First, we translate these two properties into two reasonableness functions, as follows (we omit to translate the consequences of the properties which obtain contrapositively, as we do not need those in this example).
+\begin{align}
+	j_1(\set{\prof_1, \set{a}}, \prof_2) &= \set{\set{b}},\\
+	\forall \emptyset \subset A \subseteq A_{\prof_1}, A ≠ \set{a}: j_2(\set{\prof_1, A}, \prof_2) &= \set{\set{b}}.
+\end{align}
+We can now build a reasoning DAG grounded in $J = \set{j_1, j_2}$ and claiming $(\prof_2, \set{\set{b}})$. It is displayed in Figure \ref{fig:ex:disjunction}.
+\begin{figure}
+	\centering
+	\begin{tikzpicture}[remember picture]
+		\path node (n0R) {$\prof_1$};
+		\path (n0R.east) ++(-2mm, 0) node[anchor=mid west] (j0v) {,};
+		\path (j0v.base east) node[anchor=base west] (j0) {“null”};
+		\path node[fit=(n0R) (j0), left delimiter=(, right delimiter=)] (n0) {};
+		\path (n0.east) ++(3mm, 0) node[anchor=west] (P0) {$\powerset{A_{\prof_1}} \setminus \set{\emptyset}$};
+		
+		\path[draw, ->] (n0.south) -- ++(-3cm, -1cm) node[anchor=north] {\begin{tikzpicture}
+			\path node (n1lR) {$\prof_1$};
+			\path (n1lR.east) ++(-2mm, 0) node[anchor=mid west] (j1lv) {,};
+			\path (j1lv.base east) node[anchor=base west] (j1l) {$d_{\set{a}}$};
+			\path node[fit=(n1lR) (j1l), left delimiter=(, right delimiter=)] (n1l) {};
+		\end{tikzpicture}};
+		\path (n1l.east) ++(3mm, 0) node[anchor=west] (P1l) {$\set{\set{a}}$};
+		
+		\path[draw, ->] (n0.south) -- ++(3cm, -1cm) node[anchor=north] {\begin{tikzpicture}
+			\path node (n1rR) {$\prof_1$};
+			\path (n1rR.east) ++(-2mm, 0) node[anchor=mid west] (j1rv) {,};
+			\path (j1rv.base east) node[anchor=base west] (j1r) {$d_{\powerset{A_{\prof_1}} \setminus \set{\emptyset, \set{a}}}$};
+			\path node[fit=(n1rR) (j1r), left delimiter=(, right delimiter=)] (n1r) {};
+		\end{tikzpicture}};
+		\path (n1r.east) ++(3mm, 0) node[anchor=west] (P1r) {$\powerset{A_{\prof_1}} \setminus \set{\emptyset, \set{a}}$};
+
+		\path[draw, ->] (n1l.south) -- ++(0, -1cm) node[anchor=north] {\begin{tikzpicture}
+			\path node (n2lR) {$\prof_2$};
+			\path (n2lR.east) ++(-2mm, 0) node[anchor=mid west] (j2lv) {,};
+			\path (j2lv.base east) node[anchor=base west] (j2l) {$j_1$};
+			\path node[fit=(n2lR) (j2l), left delimiter=(, right delimiter=)] (n2l) {};
+		\end{tikzpicture}};
+		\path (n2l.east) ++(3mm, 0) node[anchor=west] (P2l) {$\set{\set{b}}$};
+
+		\path[draw, ->] (n1r.south) -- ++(0, -1cm) node[anchor=north] {\begin{tikzpicture}
+			\path node (n2rR) {$\prof_2$};
+			\path (n2rR.east) ++(-2mm, 0) node[anchor=mid west] (j2rv) {,};
+			\path (j2rv.base east) node[anchor=base west] (j2r) {$j_2$};
+			\path node[fit=(n2rR) (j2r), left delimiter=(, right delimiter=)] (n2r) {};
+		\end{tikzpicture}};
+		\path (n2r.east) ++(3mm, 0) node[anchor=west] (P2r) {$\set{\set{b}}$};
+
+		\path (n2l.south) ++(3cm, -1cm) coordinate (n3x);
+		\path[draw, ->] (n2l.south) -- ($(n3x) - (1mm, 0)$);
+		\path[draw, ->] (n2r.south) -- ($(n3x) + (1mm, 0)$);
+		\path (n3x) node[anchor=north] {\begin{tikzpicture}
+			\path node (n3R) {$\prof_2$};
+			\path (n3R.east) ++(-2mm, 0) node[anchor=mid west] (j3v) {,};
+			\path (j3v.base east) node[anchor=base west] (j3) {“or”};
+			\path node[fit=(n3R) (j3), left delimiter=(, right delimiter=)] (n3) {};
+		\end{tikzpicture}};
+		\path (n3.east) ++(3mm, 0) node[anchor=west] (P3) {$\set{\set{b}}$};
+	\end{tikzpicture}
+	\caption{Example featuring a disjunction.}
+	\label{fig:ex:disjunction}
+\end{figure}
+\end{example}
+
+The following examples are not explained in detail but should intuitively make clear that our system allows for various kind of reasonings.
+\begin{example}[direct contradiction]
+\begin{align}
+	j1:&&f(\prof_1) = \set{a} &\Rightarrow f(\prof_2) = \set{a} \lor f(\prof_2) =\set{c},\\
+	j2:&&b \in f(\prof_2) &\Rightarrow f(\prof_1) = \set{a}.
+\end{align}
+Obtain that in $\prof_2$, $b$ can’t win: start with $\prof_2$ has winner $b$ or the complement using a disjunction. The first case leads to $\prof_1$ has $a$ hence $\prof_2$ has $a$ or $c$. Join both branches with “or”.
+\end{example}
+
+\begin{example}[using a contradiction]
+\begin{align}
+	j1:&&f(\prof_1) = a &\Rightarrow f(\prof_2) = a,\\
+	j2:&&f(\prof_2) = b &\Rightarrow f(\prof_1) = a,\\
+	j3:&&f(\prof_2) ≠ b &\Rightarrow f(\prof_3) = a.
+\end{align}
+Obtain $f(\prof_3) = a$ as with example above, using $b \notin f(\prof_2)$ as an intermediary step.
+\end{example}
+
+\begin{example}[cross disjunction]
+\begin{align}
+	j1:&&f(\prof_1) = a &\Rightarrow f(\prof_3) = \set{\set{a}, \set{b}},\\
+	j2:&&f(\prof_1) = \overline{a} &\Rightarrow f(\prof_3) = \set{\set{a}, \set{c}},\\
+	j3:&&f(\prof_2) = a &\Rightarrow f(\prof_3) = \set{\set{a}, \set{a, d}},\\
+	j4:&&f(\prof_2) = \overline{a} &\Rightarrow f(\prof_3) = \set{\set{a}, \set{e}}.
+\end{align}
+Obtain $f(\prof_3)=a$: obtain $f(\prof_3) = a \lor b \lor c$, using disjunction on $\prof_1$, and obtain $f(\prof_3) = a \lor ad \lor e$ similarly. Join both branches with “and”.
+\end{example}
+
+\begin{figure*}
+\begin{tikzpicture}
+	\path node (Reab) {$(\pelem{\set{a, b}}, \text{elem})$};
+	\path (Reab.north) node[anchor=south] (PReab) {$\set{\set{a, b}}$};
+	\path (Reab.east) ++(1cm, 0) node[anchor=west] (Reabc) {$(\pelem{\set{a, b, c}}, \text{elem})$};
+	\path (Reabc.north) node[anchor=south] (PReabc) {$\set{\set{a, b, c}}$};
+	\path (Reabc.east) ++(1cm, 0) node[anchor=west] (Rc1) {$(\pcycl{(c, b, a, d)}, \text{cycl})$};
+	\path (Rc1.north) node[anchor=south] (PRc1) {$\set{\allalts}$};
+	\path (Rc1.east) ++(1cm, 0) node[anchor=west] (Rc2) {$(\pcycl{(b, d, c, a)}, \text{cycl})$};
+	\path (Rc2.north) node[anchor=south] (PRc2) {$\set{\allalts}$};
+	\path (Reabc.south) ++(0, -1.5cm) node[anchor=north] (R2) {$(\prof_2, \text{cons})$};
+	\path[draw, ->] (Reab.south) -- (R2.north);
+	\path[draw, ->] (Reabc.south) -- (R2.north);
+	\path[draw, ->] (Rc1.south) -- (R2.north);
+	\path[draw, ->] (Rc2.south) -- (R2.north);
+	\path (R2.base west) node[anchor=base east] (PR2) {$\set{\set{a, b}}$};
+	\path (R2.base east) ++(1cm, 0) node[anchor=base west] (R1canc) {$(\prof_1 + \pinv{1}, \text{canc})$};
+	\path (R1canc.base east) node[anchor=base west] {$\set{\allalts}$};
+	\path ($(R2.south)!0.5!(R1canc.south)$) ++(0, -1.5cm) node[anchor=north] (Rbig) {$(\prof_1 + \pinv{1} + \prof_2), \text{cons})$};
+	\path[draw, ->] (R2.south) -- (Rbig.north);
+	\path[draw, ->] (R1canc.south) -- (Rbig.north);
+	\path (Rbig.base east) node[anchor=base west] {$\set{\set{a, b}}$};
+	\path (Rbig.west) ++(-2cm, 0) node[anchor=east] (R12canc) {$(\pinv{1} + \prof_2, \text{canc})$};
+	\path (R12canc.base west) node[anchor=base east] {$\set{\allalts}$};
+	\path ($(R12canc.south)!0.5!(Rbig.south)$) ++(0, -1.5cm) node[anchor=north] (R1) {$(\prof_1, \text{cons-sub})$};
+	\path[draw, ->] (R12canc.south) -- (R1.north);
+	\path[draw, ->] (Rbig.south) -- (R1.north);
+	\path (R1.east) node[anchor=west] {$\set{\set{a, b}}$};
+	\path (R1.south) ++(0, -1.5cm) node[anchor=north] (R) {$(R, \text{simp})$};
+	\path[draw, ->] (R1.south) -- (R.north);
+	\path (R.east) node[anchor=west] {$\set{\set{a, b}}$};
+\end{tikzpicture}
+\caption{A full-justifying argument for $G$ claiming $(\prof, \set{\set{a, b}})$.}
+\label{fig:bordaEx1}
+\end{figure*}
+
+\section{Computations for arguments for Borda}
+With $m=4$.
+{
+\scriptsize
+\begin{equation}
+\begin{array}{lrrrrrl}
+		& \dmap(\pelem{\set{a}})	& \dmap(\pelem{\set{a, b}})	& \dmap(\pelem{\set{a, b, c}})	& \dmap(\pcycl{\left<a, b, c, d, a\right>})	& \dmap(\pcycl{\left<a, b, d, c, a\right>})	& \dmap(\pcycl{\left<a, c, b, d, a\right>})\\
+	(a, b)	& 2	& 0	& 0	& 2	& 2	& 0\\
+	(a, c)	& 2	& 2	& 0	& 0	& -2	& 2\\
+	(a, d)	& 2	& 2	& 2	& -2	& 0	& -2\\
+	(b, c)	& 0	& 2	& 0	& 2	& 0	& -2\\
+	(b, d)	& 0	& 2	& 2	& 0	& 2	& 2\\
+	(c, d)	& 0	& 0	& 2	& 2	& -2	& 0
+\end{array}.
+\end{equation}
+}
+
+\begin{equation}
+\tprof =
+\begin{array}{cc}
+	a	&	c\\
+	b	&	b\\
+	d	&	a\\
+	c	&	d
+\end{array}.
+\end{equation}
+
+\begin{equation}
+\begin{array}{lrrr}
+		& β(\tprof)	& \beta(\prof_E)	& \beta(\prof')\\
+	a	& 2	& 	& \\
+	b	& 2	& 	& \\
+	c	& 0	& 	& \\
+	d	& -4	& 	& 
+\end{array}.
+\end{equation}
+$\prof_E = \pelem{\set{a, b}} + 2 \pelem{\set{a, b, c}}$.
+
+\begin{equation}
+\begin{array}{lrrrr}
+		& \dmap(\tprof)	& \dmap(\prof_E)	& \dmap(m \tprof) - \dmap(\prof_E)	& \dmap(\prof')\\
+	(a, b)	& 0	& 0	& 0	& 0\\
+	(a, c)	& 0	& 2	& -2	& 0\\
+	(a, d)	& 2	& 6	& 2	& 8\\
+	(b, c)	& 0	& 2	& -2	& 0\\
+	(b, d)	& 2	& 6	& 2	& 8\\
+	(c, d)	& 0	& 4	& -4	& 0
+\end{array}.
+\end{equation}
+$\prof' = \prof_E + \pcycl{\left<a, d, c, b, a\right>} + \pcycl{\left<a, b, d, c, a\right>}$.
+
+\begin{equation}
+\tprof =
+\begin{array}{cccc}
+	b	& a	& a	& a\\
+	c	& c	& b	& c\\
+	d	& b	& d	& b\\
+	a	& d	& c	& d
+\end{array}.
+\end{equation}
+
+\begin{equation}
+\begin{array}{lrrr}
+		& \beta(\tprof)	& \beta(\prof_E)	& \beta(\prof')\\
+	a	& 6	& 	& \\
+	b	& 2	& 	& \\
+	c	& 0	& 	& \\
+	d	& -8	& 	& 
+\end{array}.
+\end{equation}
+$\prof_E = 2 \pelem{\set{a}} + \pelem{\set{a, b}} + 4 \pelem{\set{a, b, c}}$.
+
+\begin{equation}
+\begin{array}{lrrrr}
+		& \dmap(\tprof)	& \dmap(\prof_E)	& \dmap(m \tprof) - \dmap(\prof_E)	& \dmap(\prof')\\
+	(a, b)	& 2	&   4	& 4	& \\
+	(a, c)	& 2	&   6	& 2	& \\
+	(a, d)	& 2	& 14	& -6	& \\
+	(b, c)	& 0	&   2	& -2	& \\
+	(b, d)	& 4	& 10	& 6	& \\
+	(c, d)	& 2	&   8	& 0	& 
+\end{array}.
+\end{equation}
+Write $D = \dmap(m \tprof) - \dmap(\prof_E)$. Take $4 q_{S_1} = D(a, b) + D(c, d)$, $4 q_{S_2} = D(a, b) - D(c, d)$, $4 q_{S_3} = D(a, b) + D(a, c) - D(b, c)$. Also check that $D(a, b) + D(a, c) + D(a, d) = 0$, $D(a, b) - D(b, c) - D(b, d) = 0$, $D(a, c) + D(b, c) + D(c, d) = 0$.
+
+$\prof' = \prof_E + \pcycl{S_1} + \pcycl{S_2} + 2 \pcycl{S_3}$.
+
+\section{A simple example for Borda}
+Consider $\allalts=\set{a, b, c}$ and a profile $\prof$ defined as:
+\begin{equation}
+\prof = 
+\begin{array}{ccc}
+	a	&	b	&	c\\
+	c	&	a	&	a\\
+	b	&	c	&	b
+\end{array}.
+\end{equation}
+
+Take only last two voters, using canc we get winners $\set{a, b, c}$, then join with cons, obtain $\set{a}$. We need to use faithfulness though.
+
+\end{document}

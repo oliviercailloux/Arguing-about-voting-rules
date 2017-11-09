@@ -1,0 +1,146 @@
+%INSTALL
+
+%avoids a warning
+%\usepackage[log-declarations=false]{xparse}
+\usepackage{xparse}
+%Should be inputed before xunicode, someone says. And put everything font-related before fontspec. But I don’t need it anyway.
+% \usepackage{amssymb} %for e.g. succcurlyeq.
+\usepackage{fontspec} %font selecting commands
+%Call amssymb before amsmath or any other amslatex style files (amsthm, ...).
+\usepackage{xunicode}
+%warn about missing characters
+\tracinglostchars=2
+
+%REDAC
+\usepackage[hang,flushmargin]{footmisc}%The 'hang' option flushes the footnote marker to the left margin of the page, while the 'flushmargin' option flushes the text as well.
+\usepackage{booktabs}
+\usepackage{hyphenat}
+\usepackage{calc}
+
+\usepackage{mathtools} %load this before babel!
+	\mathtoolsset{showonlyrefs,showmanualtags}
+
+\usepackage[super]{nth}
+\usepackage{listings} %typeset source code listings
+	\lstset{language=XML,tabsize=2,literate={"}{{\tt"}}1,captionpos=b}
+\usepackage[nolist,printonlyused]{acronym}%when using smaller, we get: relsize Warning: Failed to get list of defined font sizes.
+\usepackage{xspace}
+\usepackage[textsize=small]{todonotes}
+\usepackage[pdfpagelabels=false]{hyperref}
+%pdfusetitle does not work!
+%breaklinks makes links on multiple lines into different PDF links to the same target.
+%colorlinks (false): Colors the text of links and anchors. The colors chosen depend on the the type of link. In spite of colored boxes, the colored text remains when printing.
+%linkcolor=black: this leaves other links in colors, e.g. refs in green, don't print well.
+%pdfborder (0 0 1, set to 0 0 0 if colorlinks): width of PDF link border
+%hidelinks
+\hypersetup{breaklinks,bookmarksopen}
+% hyperref doc says: Package bookmark replaces hyperref’s bookmark organization by a new algorithm (...) Therefore I recommend using this package.
+\usepackage{bookmark}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% center floats by default, but do not use with float
+% \usepackage{floatrow}
+% \makeatletter
+% \g@addto@macro\@floatboxreset\centering
+% \makeatother
+\usepackage{enumitem} %follow enumerate by a string saying how to display enumeration
+\usepackage{ragged2e} %new com­mands \Cen­ter­ing, \RaggedLeft, and \RaggedRight and new en­vi­ron­ments Cen­ter, FlushLeft, and FlushRight, which set ragged text and are eas­ily con­fig­urable to al­low hy­phen­ation (the cor­re­spond­ing com­mands in LaTeX, all of whose names are lower-case, pre­vent hy­phen­ation al­to­gether). 
+\usepackage{siunitx} %[expproduct=tighttimes, decimalsymbol=comma]
+\usepackage{braket} %for \Set
+\usepackage{natbib}
+\usepackage{doi}
+
+\usepackage{amsmath,amsthm}
+% \usepackage{amsfonts} %not required?
+% \usepackage{dsfont} %for what?
+%unicode-math overwrites the following commands from the mathtools package: \dblcolon, \coloneqq, \Coloneqq, \eqqcolon. Using the other colon-like commands from mathtools will lead to inconsistencies. Plus, Using \overbracket and \underbracke from mathtools package. Use \Uoverbracket and \Uunderbracke for original unicode-math definition.
+%use exclusively \mathbf and choose math bold style below.
+\usepackage[warnings-off={mathtools-colon, mathtools-overbracket}, bold-style=ISO]{unicode-math}
+
+%IJCAI demands Adobe’s Times Roman. The example paper actually uses Nimbus Roman No 9 L (very close); with CM for the sans font. I use texgyretermes, a modern version of NR9L and texgyrecursor for the monospaced version. No instruction provided for math font. I use the default (latin modern).
+%\setsansfont[%
+%	BoldFont = texgyreheros-bold.otf,%
+%	ItalicFont = texgyreheros-italic.otf,%
+%	BoldItalicFont = texgyreheros-bolditalic.otf,%
+%	Mapping=tex-text% to turn "--" into dashes, useful for bibtex%%
+%]{texgyreheros-regular.otf}
+
+\newfontfamily\texgyretermesfamily[
+	BoldFont = texgyretermes-bold.otf,%
+	ItalicFont = texgyretermes-italic.otf,%
+	BoldItalicFont = texgyretermes-bolditalic.otf,%
+	Mapping=tex-text% to turn "--" into dashes, useful for bibtex%%
+]{texgyretermes-regular.otf}
+
+\newfontfamily\xitsfamily[
+	BoldFont = xits-bold.otf,%
+	ItalicFont = xits-italic.otf,%
+	BoldItalicFont = xits-bolditalic.otf,%
+	Mapping=tex-text% to turn "--" into dashes, useful for bibtex%%
+]{xits-regular.otf}
+
+%\setmonofont[%
+%       Fractions=On,
+%       BoldFont = texgyrecursor-bold.otf,%
+%       ItalicFont = texgyrecursor-italic.otf,%
+%       BoldItalicFont = texgyrecursor-bolditalic.otf,%
+%       Mapping=tex-text% to turn "--" into dashes, useful for bibtex%%
+%]{texgyrecursor-regular.otf}
+
+%\setmainfont[%
+%       Fractions=On,
+%       BoldFont = texgyretermes-bold.otf,%
+%       ItalicFont = texgyretermes-italic.otf,%
+%       BoldItalicFont = texgyretermes-bolditalic.otf,%
+%       Mapping=tex-text% to turn "--" into dashes, useful for bibtex%%
+%]{texgyretermes-regular.otf}
+
+%NOT loading the font (which should result in latinmodern-math being automatically loaded) solves the spacing problem with some subscripts.
+%\setmathfont{latinmodern-math.otf}
+
+% setminus is missing in lmmath font and in texgyrepagella-math
+\AtBeginDocument{\renewcommand{\setminus}{\smallsetminus}}
+%\setmathfont[range={"29F5}]{xits-math.otf}
+%∉
+%\setmathfont[range={"2209}]{texgyrepagella-math.otf}
+%mapsto
+%\setmathfont[range={"21A6}]{texgyrepagella-math.otf}
+%✗
+%\setmathfont[range={"2717}]{texgyrepagella-regular.otf}
+%✓
+%\setmathfont[range={"2713}]{texgyrepagella-math.otf}
+%\vert, symbol code found in unimath-symbols.pdf (also used for \lvert and \rvert)
+%\setmathfont[range={"007C}]{texgyrepagella-math.otf}
+
+%GRAPHICS
+\usepackage{pgf}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.14}
+	\usetikzlibrary{matrix,fit,plotmarks,calc,trees,shapes.geometric,positioning,plothandlers}
+\usepackage{graphicx}
+
+\graphicspath{{graphics/},{graphics-dm/}}
+\DeclareGraphicsExtensions{.pdf}
+
+%HACKING
+\usepackage{printlen}
+\uselengthunit{mm}
+% 	\newlength{\templ}% or LenTemp?
+% 	\setlength{\templ}{6 pt}
+% 	\printlength{\templ}
+\usepackage{etoolbox} %for addtocmd command
+\usepackage{scrhack}% load at end. Corrects a bug in float package, which is outdated but might be used by other packages
+\usepackage{xltxtra} %somebody said that this is loaded by fontspec, but does not seem correct: if not loaded explicitly, does not appear in the log and \showhyphens is not corrected.
+
+%Beamer-specific
+%\usepackage{todonotes}%UNNECESSARY
+%\usepackage{natbib}%REMOVE?
+%ADD
+% \usepackage{appendixnumberbeamer}
+% \newcommand{\citep}{\cite}
+% \setbeamersize{text margin left=0.1cm, text margin right=0.1cm} 
+% \setbeamertemplate{navigation symbols}{} 
+% to solve: this theme produces lots of warnings!
+% \usetheme{BrusselsBelgium}
+% \usefonttheme{professionalfonts}
+
