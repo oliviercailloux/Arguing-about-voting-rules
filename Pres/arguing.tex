@@ -1,0 +1,847 @@
+\RequirePackage[l2tabu, orthodox]{nag}
+\RequirePackage{silence}
+\WarningFilter{ifpdf}{Someone has redefined \pdfoutput}
+\WarningFilter{fmtcount}{\ordinal already defined use \FCordinal instead}
+\documentclass[english]{beamer}
+\input{preamble/packages}
+\input{preamble/math_basics}
+\input{preamble/math_mine}
+\input{preamble/redac}
+\input{preamble/draw}
+\input{preamble/acronyms}
+
+\title{Arguing about voting rules}
+\subject{Voting rules}
+\keywords{social choice}
+\author[Olivier Cailloux]{\emph{Olivier Cailloux} \inst{1} \and Ulle Endriss \inst{2}}
+\institute[Paris Dauphine]{\inst{1} LAMSADE, Paris Dauphine \and \inst{2} ILLC, University of Amsterdam}
+\date{\formatdate{16}{3}{2016}}
+
+\begin{document}
+\bibliographystyle{apalike}
+
+\begin{frame}[plain]
+	\tikz[remember picture,overlay]{
+		\node[anchor=south west, inner sep=0] at (current page.south west) {
+			{\includegraphics[height=1cm]{LAMSADE95.jpg}}
+		};
+		\path (current page.south) node[anchor=south, inner sep=0] {
+			{\includegraphics[height=1cm]{Dauphine.jpg}}
+		};
+		\node[anchor=south east, inner sep=0] at (current page.south east) {
+			{\includegraphics[height=1cm]{illc_cropped}}
+		};
+	}
+   \titlepage
+\end{frame}
+\addtocounter{framenumber}{-1}
+
+\begin{frame}
+	\frametitle{Outline}
+	\tableofcontents[hideallsubsections, sectionstyle=shaded/show]
+\end{frame}
+
+\section{Context}
+\subsection{Introduction}
+\begin{frame}
+	\frametitle{Introduction}
+	
+	\begin{block}{Context}
+	\begin{itemize}
+		\item Voting rule: a systematic way of aggregating different opinions and decide
+		\item Multiple reasonable ways of doing this
+		\item Different voting rules have different interesting properties
+		\item None satisfy all desirable properties
+	\end{itemize}
+	\end{block}
+	\begin{block}{Our goal}
+		We want to easily communicate about strength and weaknesses of voting rules.
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Voting rule}
+	
+	\begin{description}[Profile (on $A$)]
+		\item[Alternatives] $\allalts = \set{a, b, c, d, \ldots}$%; $\card{\allalts}=m$
+		\item[Possible voters] $\allvoters = \set{1, 2, \ldots}$
+		\item[Voters] $\emptyset \subset \voters \subseteq \allvoters$
+%		\item[Linear orders on $A \subseteq \allalts$] $\linors$.
+		\item[Profile] partial function $\prof$ from $\allvoters$ to linear orders on $\allalts$.
+		\item[Voting rule] function $f$ mapping each $\prof$ to winners $\emptyset \subset A \subseteq \allalts$.
+	\end{description}
+	\vfill
+	\begin{center}
+		\begin{tikzpicture}
+			\path node[profile matrix] (profile) {
+				\prof(1)&
+				\prof(2)
+				\\
+				| (profile11) | a&
+				b
+				\\
+				b&
+				a
+				\\
+				c&
+				| (profile32) | c
+				\\
+			};
+			\path ($(profile.south west)!.5!(profile.south east)$) ++ (0, -5mm) node {$\prof$};
+			
+			\path node[draw, rectangle, fit=(profile11) (profile32), outer xsep=2mm, outer ysep=1mm] (justprofile) {};
+			\path (justprofile.east) ++ (2.5cm, 0) node[inner sep=0] (winners) {\mbox{} $A = \Set{a, b}$};
+			\path[draw, ->] (justprofile.east) to[bend left=35] node[anchor=south] {$f$} (winners.west);
+
+			\path[draw, decorate, decoration={brace, mirror}] (justprofile.south west) -- (justprofile.south east);
+		\end{tikzpicture}
+	\end{center}
+\end{frame}
+
+\subsection{Two voting rules}
+\begin{frame}
+	\frametitle{Borda}
+	
+	\begin{itemize}
+		\item Jean-Charles de Borda, 1733–1799
+	\end{itemize}
+Given a profile $\prof$:
+	\begin{itemize}
+		\item count the score of each alternative;
+		\item the highest scores win.
+		\item Score of $a \in \allalts$ is the number of alternatives it beats.
+	\end{itemize}
+	\vspace{-0.7pt}
+	
+	\begin{equation}
+		\prof =
+		\begin{array}{ccc}
+			a	&	b	&	b\\
+			d	&	c	&	a\\
+			c	&	a	&	c\\
+			b	&	d	&	d
+		\end{array}.
+	\end{equation}
+	\begin{minipage}{7cm}
+		\begin{itemize}
+			\item score $a$ is\dots? \pause $3 + 1 + 2 = 6$
+			\item score $b$ is $0 + 3 + 3 = 6$
+			\item score $c$ is $1 + 2 + 1 = 4$
+			\item score $d$ is $2 + 0 + 0 = 2$
+		\end{itemize}
+	\end{minipage}%
+	\begin{minipage}{4cm}
+		Winners are $\Set{a, b}$.
+	\end{minipage}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Condorcet’s principle}
+	
+	An idea from Marie Jean Antoine Nicolas de Caritat, marquis de Condorcet (1743–1794).
+	\begin{block}{Condorcet’s principle}
+		We ought to take the Condorcet winner as sole winner if it exists.
+		\begin{itemize}
+			\item $a$ \emph{beats} $b$ iff more than half the voters prefer $a$ to $b$.
+			\item $a$ is a \emph{Condorcet winner} iff $a$ beats every other alternatives.
+		\end{itemize}
+	\end{block}
+	\vfill
+	\begin{equation}
+		\prof =
+		\begin{array}{ccc}
+			a	&	b	&	b\\
+			d	&	c	&	a\\
+			c	&	a	&	c\\
+			b	&	d	&	d
+		\end{array}.\text{ Who wins?}
+	\end{equation}
+\end{frame}
+
+\subsection{Our objective}
+\begin{frame}
+	\frametitle{How are voting rules analyzed?}
+	
+	\begin{itemize}
+		\item Examples featuring counter-intuitive results for some voting rules.
+		\item Properties of voting rules, \eg Borda does not satisfy Condorcet’s principle.
+		\item Axiomatization of a voting rule: accepting such principles lead to a unique voting rule.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Our objective}
+	
+	\begin{itemize}
+		\item Different voting rules
+		\item Arguments in favor or against rules
+		\item Dispersed in the literature
+		\item Using mathematical formalism
+	\end{itemize}
+	\begin{block}{We propose}
+		\begin{itemize}
+			\item Common language
+			\item Instantiate arguments on concrete examples
+		\end{itemize}
+	\end{block}
+	Goal: help understand strengths and weaknesses of given rules.
+\end{frame}
+
+\AtBeginSection{
+	\begin{frame}
+		\frametitle{Outline}
+		\tableofcontents[currentsection, hideallsubsections]
+	\end{frame}
+}
+
+\section{Language}
+%\subsection{Preliminary example}
+\begin{frame}
+	\frametitle{Example of axiom}
+	
+	\begin{itemize}
+		\item Dominance: if $a$ dominates $b$ in $\prof$, then $b$ may not win.
+		\item We want a language to express this kind of axioms.
+	\end{itemize}
+\end{frame}
+
+\subsection{Presentation}
+\begin{frame}
+	\frametitle{Language}
+	
+	We use propositional logic (with connectives $¬, ∨, ∧, →$).
+	\begin{block}{Atoms}
+		\begin{itemize}
+			\item One atom for each $(\prof, A)$, $\emptyset \subset A \subseteq \allalts$.
+			\item An atom talks about assigning winners $A$ to $\prof$.
+			\item Written $\lato$.
+		\end{itemize}
+	\end{block}
+	\begin{block}{Semantics}
+		Semantics $v_f$, given a voting rule $f$:
+		\begin{equation}
+			v_f(\lato) = \ltru \text{ iff } f(\prof)=A.
+		\end{equation}
+	\end{block}
+\end{frame}
+
+\begin{frame}
+	\frametitle{L-axioms}
+	
+	\begin{itemize}
+		\item Now: “translate” axioms into language-axioms.
+		\item An \emph{l-axiom} is a set of formulæ.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Symmetric cancellation l-axiom}
+	
+	\begin{definition}[\laxiom{Sym}]
+		For each $\prof$ consisting of a linear order and its inverse,
+		\setlength\abovedisplayskip{1 ex}
+		\begin{equation}
+			\lato[\prof][\allalts].
+		\end{equation}
+	\end{definition}
+	\begin{example}
+		$\prof_1 =
+		\begin{array}{cc}
+			a&c\\
+			b&b\\
+			c&a\\
+		\end{array},$
+	constraints? $f(\prof_1) = \pause \allalts = \set{a, b, c}.$ \pause
+	\end{example}
+	\begin{example}
+		$\prof_2 =
+		\begin{array}{cc}
+			a&b\\
+			b&a\\
+			c&c\\
+		\end{array}$,
+		constraints? \pause None.
+	\end{example}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Shortcut notations}
+	
+	$\powersetz{\allalts}$ the set of subsets of $\allalts$, excluding the empty set.
+	\\[2 em]
+	Let $\alpha \subseteq \powersetz{\allalts}$ be a set of possible winning alternatives.
+	\begin{block}{Uni-profile clause}
+		$\latoin$ shortcut for:
+		\begin{equation}
+			\bigvee_{A \in \alpha} \lato.
+		\end{equation}
+		\begin{itemize}
+			\item Intuitive content.
+			\item Called a uni-profile clause.
+		\end{itemize}
+	\end{block}
+\end{frame}
+
+\subsection{L-axioms}
+\begin{frame}
+	\frametitle{Dominance l-axiom}
+	
+	\begin{definition}[\laxiom{Dom}]
+		L-axiom \laxiom{Dom}: for each $\prof$,
+		\setlength\abovedisplayskip{1 ex}
+		\begin{equation}
+			\latoin[\prof][\powersetz{U_\prof}],
+		\end{equation}
+		with $U_\prof$ the set of alternatives in $\prof$ that are not dominated.
+	\end{definition}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Domain knowledge}
+	
+	\begin{itemize}
+		\item We need some formulæ encoding the voting rule concept.
+		\item Define $\kappa$ as the set of all those formulæ.
+	\end{itemize}
+	\begin{block}{Domain knowledge $\kappa$}
+		\setlength\abovedisplayskip{1 ex}
+		\begin{enumerate}
+			\item a voting rule can’t select more than one set of winners:\\
+			for all $\prof$ and all $\emptyset \subset A ≠ B \subseteq \allalts$,
+			\begin{equation}
+				\lato[\prof][A] ∧ \lato[\prof][B] → \bot.
+			\end{equation}
+			\item a voting rule must select at least one set of winners:\\
+			for all $\prof$,
+			\begin{equation}
+				\latoin[\prof][\powersetz{\allalts}].
+			\end{equation}
+		\end{enumerate}
+	\end{block}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Reinforcement axiom}
+	
+	Classical reinforcement axiom: consider $\prof_1$, $\prof_2$,
+	\begin{itemize}
+		\item having winners $A_1$, $A_2$,
+		\item with $A_1 \cap A_2 ≠ \emptyset$;
+	\end{itemize}
+	then winners in $\prof_1 + \prof_2$ must be $A_1 \cap A_2$.
+	\begin{example}
+		\begin{equation}
+			\prof_1 =
+			\begin{array}{cc}
+				a&b\\
+				b&a\\
+				c&c\\
+			\end{array},
+			A_1 = \set{a, b},
+			\pause
+			\prof_2 =
+			\begin{array}{ccc}
+				a&b&a\\
+				b&a&c\\
+				c&c&b\\
+			\end{array},
+			A_2 = \set{a},
+		\end{equation}
+		\begin{equation}
+			\prof =
+			\begin{array}{ccccc}
+				a&b&a&b&a\\
+				b&a&b&a&c\\
+				c&c&c&c&b\\
+			\end{array}.
+			\text{ Winners? }
+			\pause
+			\set{a}
+		\end{equation}
+	\end{example}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Reinforcement l-axiom}
+	
+	Classical reinforcement axiom: consider $\prof_1$, $\prof_2$,
+	\begin{itemize}
+		\item having winners $A_1$, $A_2$,
+		\item with $A_1 \cap A_2 ≠ \emptyset$;
+	\end{itemize}
+	then winners in $\prof_1 + \prof_2$ must be $A_1 \cap A_2$.
+	\begin{definition}[\laxiom{Reinf}]
+		For each $\prof_1, \prof_2, A_1, A_2 \subseteq \allalts, A_1 \cap A_2 ≠ \emptyset$:
+		\begin{equation}
+			(\lato[\prof_1][A_1] ∧ \lato[\prof_2][A_2]) → \lato[\prof_1 + \prof_2][A_1 \cap A_2].
+		\end{equation}
+	\end{definition}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Fishburn-against-Condorcet argument}
+	
+	\begin{minipage}{5.5cm}
+		\citet[p. 544]{fishburn_paradoxes_1974} argument against the Condorcet principle (see also \url{http://rangevoting.org/FishburnAntiC.html}).
+		\begin{block}{Condorcet winner}
+%		\setlength\abovedisplayskip{0 ex}
+%		\begin{equation}
+			$w \text{ VS } \mu, \mu \in \set{a, \ldots, h}\text{? }\uncover<2->{51/101}$
+%		\end{equation}
+		\end{block}
+	\end{minipage}%
+	\begin{minipage}{\columnwidth-5cm}
+		\small
+		\begin{equation}
+			\begin{array}{lrrrrrr}
+				&\multicolumn{6}{c}{\text{nb voters}}\\
+			\cmidrule{2-7}
+					&31	&19	&10	&10	&10	&21	\\
+			\midrule
+				1	&a	&a	&f	&g	&h	&h	\\
+				2	&b	&b	&w	&w	&w	&g	\\
+				3	&c	&c	&a	&a	&a	&f	\\
+				4	&d	&d	&h	&h	&f	&w	\\
+				5	&e	&e	&g	&f	&g	&a	\\
+				6	&w	&f	&e	&e	&e	&e	\\
+				7	&g	&g	&d	&d	&d	&d	\\
+				8	&h	&h	&c	&c	&c	&c	\\
+				9	&f	&w	&b	&b	&b	&b	\\
+			\end{array}
+		\end{equation}
+	%	\begin{tikzpicture}
+	%		\path node[profile matrix] (profile) {
+	%				&31	&19	&10	&10	&10	&21	\\
+	%			1	&a	&a	&f	&g	&h	&h	\\
+	%			2	&b	&b	&w	&w	&w	&g	\\
+	%			3	&c	&c	&a	&a	&a	&f	\\
+	%			4	&d	&d	&h	&h	&f	&w	\\
+	%			5	&e	&e	&g	&f	&g	&a	\\
+	%			6	&w	&f	&e	&e	&e	&e	\\
+	%			7	&g	&g	&d	&d	&d	&d	\\
+	%			8	&h	&h	&c	&c	&c	&c	\\
+	%			9	&f	&w	&b	&b	&b	&b	\\
+	%		};
+	%	\end{tikzpicture}
+	%	BUT ranks:
+	\end{minipage}
+	\vspace{-1pt}
+	\onslide<3>
+	\begin{equation}
+		\vspace*{-8.4pt}
+		\begin{array}{lrrrrrrrrr}
+			&\multicolumn{9}{c}{\text{ranks}}\\
+		\cmidrule{2-10}
+			&1	&≤2	&≤3	&≤4	&≤5	&≤6	&≤7	&≤8	&≤9	\\
+		\midrule
+		w	&0	& 30	& 30	& 51	& 51	& 82	& 82	& 82	&101	\\
+		a	&50	& 50	& 80	& 80	& 101	& 101	& 101	&101	&101	\\
+		\end{array}
+	\end{equation}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Fishburn-versus-Condorcet l-axiom}
+	
+	Define $\prof_F$ the profile shown in the previous slide.
+	\begin{definition}[Fishburn-versus-Condorcet]
+		The Fishburn-versus-Condorcet l-axiom \laxiom{FvsC} is defined as:
+		\setlength\abovedisplayskip{1 ex}
+		\begin{equation}
+			\latoin[\prof_F][\powersetz{\allalts \setminus \set{w}}].
+		\end{equation}
+	\end{definition}
+\end{frame}
+
+\begin{frame}
+	\frametitle{L-axiomatization}
+	
+	An l-axiomatization is a set of l-axioms.
+	
+	\begin{definition}[Conforming to $J$]
+		The rule $f$ conforms to the l-axiomatization $J$ iff %$f$ conforms to all $j$ in $J$, iff $v_f$ satisfies all $j$, iff 
+		$v_f$ assigns the value $\ltru$ to all formulæ in $j$, for all $j \in J$.
+	\end{definition}
+	An l-axiomatization is consistent iff there exists a voting rule conformant to it.
+\end{frame}
+
+\subsection{Arguments}
+\begin{frame}
+	\frametitle{Arguments}
+	
+	\begin{definition}[Argument]
+		An argument grounded on $J$ is a pair $(\text{\emph{claim}}, \text{\emph{proof}})$,
+		\begin{itemize}
+			\item $J$ an l-axiomatization,
+			\item \emph{claim} a uni-profile clause (thus of the form $\latoin[\prof][\alpha]$),
+			\item \emph{proof} a natural deduction proof of the claim grounded on $J$.
+		\end{itemize}
+	\end{definition}
+	\begin{itemize}
+		\item The argument shows that for all voting rules $f$ conformant to $J$, $f(\prof)$ selects a set of winners among $\alpha$.
+		\item The argument claims that it is only reasonable to choose the winners among $\alpha$ for $\prof$ (provided $J$ is accepted).
+		\item \emph{Consistent} arguments require a consistent l-axiomatization.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{A simple argument}
+	
+	\begin{block}{Claim}
+		\begin{minipage}{2cm}
+			Consider:
+		\end{minipage}
+		\begin{minipage}{\columnwidth-3cm}
+			\begin{itemize}
+				\item
+					$
+					\prof =
+					\begin{array}{cccc}
+						a&b&a&c\\
+						b&c&b&b\\
+						c&a&c&a\\
+					\end{array}$,
+				\item $J = \Set{\laxiom{Dom}, \laxiom{Sym}, \laxiom{Reinf}}$.
+			\end{itemize}
+		\end{minipage}
+		\vspace{\baselineskip}
+
+		We can prove that for $f$ compliant with $J$:
+		\setlength\abovedisplayskip{1 ex}
+		\begin{equation}
+			\latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}].
+		\end{equation}
+	\end{block}
+	See how?
+	\pause
+	Consider
+	$
+	\prof_D =
+	\begin{array}{cc}
+		a&b\\
+		b&c\\
+		c&a\\
+	\end{array}, 
+	\prof_S =
+	\begin{array}{cc}
+		a&c\\
+		b&b\\
+		c&a\\
+	\end{array}, 
+	\prof = \prof_D + \prof_S
+	$.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Example proof}
+	$
+	\prof_D =
+	\begin{array}{cc}
+		a&b\\
+		b&c\\
+		c&a\\
+	\end{array}, 
+	\prof_S =
+	\begin{array}{cc}
+		a&c\\
+		b&b\\
+		c&a\\
+	\end{array}, 
+	\prof = \prof_D + \prof_S = 
+					\begin{array}{cccc}
+						a&b&a&c\\
+						b&c&b&b\\
+						c&a&c&a\\
+					\end{array}
+	$.
+\begin{enumerate}
+	\item $\latoin[\prof_D][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{Dom})
+	\item $\lato[\prof_S][\set{a, b, c}]$ (\laxiom{Sym})
+	\item $(\lato[\prof_D][\set{a}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{a}]$ (\laxiom{Reinf})
+	\item $(\lato[\prof_D][\set{b}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{b}]$ (\laxiom{Reinf})
+	\item $(\lato[\prof_D][\set{a, b}] ∧ \lato[\prof_S][\set{a, b, c}]) → \lato[\prof][\set{a, b}]$ (\laxiom{Reinf})
+	\item $\lato[\prof_D][\set{a}] → \lato[\prof][\set{a}]$ (PR from 2 \& 3)
+	\item $\lato[\prof_D][\set{b}] → \lato[\prof][\set{b}]$ (PR from 2 \& 4)
+	\item $\lato[\prof_D][\set{a, b}] → \lato[\prof][\set{a, b}]$ (PR from 2 \& 5)
+	\item $\lato[\prof_D][\set{a}] ∨ \lato[\prof_D][\set{b}] ∨ \lato[\prof_D][\set{a, b}]$ (rewrite 1)
+	\item $\lato[\prof][\set{a}] ∨ \lato[\prof][\set{b}] ∨ \lato[\prof][\set{a, b}]$ (PR from 6--9)
+	\item $\latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$ (rewrite 10)\qedhere
+\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Example shortened}
+Tweak l-axioms to skip steps which will seem intuitive to humans.
+\begin{definition}[Reinforcement-sets]
+For each $\prof_1$, $\prof_2$, $\alpha_1, \alpha_2 \subseteq \powersetz{\allalts}$, {\tiny $\cap Q ≠ \emptyset, Q \in \alpha_1 × \alpha_2$}: $(\latoin[\prof_1][\alpha_1] ∧ \latoin[\prof_2][\alpha_2]) → \latoin[\prof_1 + \prof_2][\bigcup_{A_1 \in \alpha_1, A_2 \in \alpha_2} \set{A_1 \cap A_2}]$.
+\end{definition}
+	\begin{enumerate}
+%TODO make first letter of laxioms a capital.
+		\item $\latoin[\prof_D][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{dom})
+			\item $\lato[\prof_S][\set{a, b, c}]$ (\laxiom{Sym})
+			\item $((1) ∧ (2)) → \latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$ (\laxiom{Reinf-sets})
+			\item $\latoin[\prof][\set{\set{a}, \set{b}, \set{a, b}}]$
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Soundness and completeness}
+	
+	Consider an l-axiomatization $J$ and a claim $c = \latoin[\prof][\alpha]$.
+	\begin{theorem}[Soundness]
+		If there exists an argument $\left(c, \text{proof}\right)$ grounded on $J$, the claim holds given $J$.
+	\end{theorem}
+	\begin{theorem}[Completeness]
+		If the claim holds given $J$, then there exists an argument $(c, \text{proof})$ grounded on $J$.
+	\end{theorem}
+	This is easily obtained from the soundness and completeness of natural deduction in propositional logic.
+\end{frame}
+
+\section{Arguing for Borda}
+\begin{frame}[fragile]
+	\frametitle{Argument building for Borda}
+	
+	Write $f_B$ for the Borda rule.
+	\begin{itemize}
+		\item We want to produce an argument justifying Borda’s output.
+		\item Given $\prof$, we want an argument with claim $\lato[\prof][f_B(\prof)]$.
+		\item Basis: \citet{young_axiomatization_1974}’s axiomatization of the Borda rule.
+		\item Our l-axiomatization uses three simple profile types plus \laxiom{reinf}.
+	\end{itemize}
+\end{frame}
+
+\subsection{L-axiomatization}
+\begin{frame}[fragile]
+	\frametitle{Elementary profile}
+	
+	Fix an arbitrary linear order $k$ on $\allalts$. Given $A \subseteq \allalts$, define $\pelem{A}$.
+	\begin{minipage}{(\columnwidth - 2em) * \real{0.6}}
+		\begin{definition}[Elementary profile]
+			\begin{tikzpicture}
+				\path node[profile matrix, row 2/.style={nodes={draw, rectangle, minimum width=1.5em, minimum height=9ex}}, row 3/.style={nodes={draw, rectangle, minimum width=1.5em, minimum height=6ex}}] (profile) {
+					\pelem{A}(1)	&\pelem{A}(2)\\
+					| (profile-1-1) | 	& | (profile-1-2) | 	\\
+					| (profile-2-1) | 	& | (profile-2-2) | 	\\
+				};
+				\path (profile-1-1.west) ++(-5mm, 0) node[anchor=east] (profile-1-1 expl) {$\restr{k}{A}$};
+				\path (profile-1-2.east) ++(5mm, 0) node[anchor=west] (profile-1-2 expl) {$\restr{k^{-1}}{A}$};
+				\path (profile-2-1.west) ++(-5mm, 0) node[anchor=east] (profile-2-1 expl) {$\restr{k}{\allalts \setminus A}$};
+				\path (profile-2-2.east) ++(5mm, 0) node[anchor=west] (profile-2-2 expl) {$\restr{k^{-1}}{\allalts \setminus A}$};
+				\path[draw, ->] (profile-1-1 expl.east) -- (profile-1-1.west);
+				\path[draw, <-] (profile-1-2.east) -- (profile-1-2 expl.west);
+				\path[draw, ->] (profile-2-1 expl.east) -- (profile-2-1.west);
+				\path[draw, <-] (profile-2-2.east) -- (profile-2-2 expl.west);
+				
+				\path[draw, decorate, decoration={brace, mirror}] (profile.south west) -- (profile.south east);
+				\path (profile.south) ++(0, -5mm) node {$\pelem{A}$};
+			\end{tikzpicture}
+		\end{definition}
+	\end{minipage}\hspace{2em}%
+	\begin{minipage}{(\columnwidth - 2em) * \real{0.4}}
+		\begin{example}
+			\begin{tikzpicture}
+				\path node[profile matrix] (profile) {
+					\pelem{\Set{a, b, c}}(1)	&\pelem{\Set{a, b, c}}(2)\\
+					| (profile-1-1) | a	& | (profile-1-2) | c	\\
+					b	&b	\\
+					| (profile-3-1) | c	& | (profile-3-2) | a	\\[2ex]
+					| (profile-4-1) | d	& | (profile-4-2) | e	\\
+					| (profile-5-1) | e	& | (profile-5-2) | d	\\
+				};
+				\path node[draw, rectangle, fit=(profile-1-1) (profile-3-1)] {};
+				\path node[draw, rectangle, fit=(profile-4-1) (profile-5-1)] {};
+				\path node[draw, rectangle, fit=(profile-1-2) (profile-3-2)] {};
+				\path node[draw, rectangle, fit=(profile-4-2) (profile-5-2)] {};
+				
+				\path (profile.south west) ++ (1mm, -1mm) coordinate (profile-bottom-left);
+				\path (profile.south east) ++ (-1mm, -1mm) coordinate (profile-bottom-right);
+				\path[draw, decorate, decoration={brace, mirror}] (profile-bottom-left) -- (profile-bottom-right);
+				\path (profile.south) ++(0, -5mm) node {$\pelem{\Set{a, b, c}}$};
+			\end{tikzpicture}
+		\end{example}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Cyclic profiles}
+	Given $S$ a complete cycle in $\allalts$, define $\pcycl{S}$.
+	\begin{definition}[Cyclic profile]
+		$\pcycl{S}$ is the profile composed by all $\card{\allalts}$ possible linearizations of $S$ as preference orderings. 
+	\end{definition}
+	\begin{example}
+		\begin{equation}
+			\pcycl{\left<a, b, c, d\right>} =
+			\begin{array}{cccc}
+				a&b&c&d\\
+				b&c&d&a\\
+				c&d&a&b\\
+				d&a&b&c\\
+			\end{array}.
+		\end{equation}
+	\end{example}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Borda l-axiomatization}
+\begin{description}
+	\item[\laxiom{elem}] for all $A$: $\lato[\pelem{A}][A]$.
+	\item[\laxiom{cycl}] for all $S$: $\lato[\pcycl{S}][\allalts]$.
+	\item[\laxiom{reinf}] as previously but generalized to any number of summed profiles.
+%	\item[reinf-sub] when $\prof_3 = \prof_1 - \prof_2$, and $f(\prof_2) = \alts_\prof$, $f(\prof_3)$ must equal $f(\prof_1)$. This is also a consequence of the classical reinforcement axiom.
+	\item[\laxiom{canc}] cancellation: when all pairs of alternatives $(a, b)$ in a profile are such that $a$ is preferred to $b$ as many times as $b$ to $a$, the set of winners must be $\allalts$.
+%	\item[simp] simplification: when a profile consists in a repetition of the same sub-profile, the sub-profile must have the same winners.
+\end{description}
+\end{frame}
+
+\subsection{Example}
+\begin{frame}
+	\frametitle{An example}
+	
+	Consider $\allalts=\set{a, b, c, d}$ and a profile $\prof$ defined as:
+	\begin{equation}
+		\prof =
+		\begin{array}{cc}
+			a	&	c\\
+			b	&	b\\
+			d	&	a\\
+			c	&	d
+		\end{array}.
+	\end{equation}
+	\pause
+	We want to justify that $f_B(\prof)=\Set{a, b}$.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Sketch}
+	
+	\begin{itemize}
+		\item Consider any $\prof' = q_1 \pelem{a, b} + q_2 \pelem{a, b, c} + \sum_{S \in \mathcal{S}} q_S \pcycl{S}$, $q_1, q_2, q_S \in \N, \mathcal{S}$ some set of cycles.
+		\item In $\prof'$, $W=\set{a, b}$ must win.
+		\item Find $k \in \N$ such that $\overline{k \prof} + \prof'$ cancel.
+		\item Then $k \prof$ has winners $W$. (Skipping details.)
+		\item Then $\prof$ has winners $W$.
+	\end{itemize}
+	Our task: find $\prof'$ a combination of elementary and cyclic profiles such that $\overline{k \prof} + \prof'$ cancel.
+	
+	Good news: this is always possible.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Application on the example}
+	
+	Define $\prof' = \pelem{a, b} + 2 \pelem{a, b, c} + \pcycl{\left<c, b, a, d\right>} + \pcycl{\left<b, d, c, a\right>}$.
+	\begin{enumerate}
+		\item $\lato[\pelem{a, b}][\set{a, b}]$ (\laxiom{elem})
+		\item $\lato[\pelem{a, b, c}][\set{a, b, c}]$ (\laxiom{elem})
+		\item $\lato[\pcycl{\left<c, b, a, d\right>}][\allalts]$ (\laxiom{cycl})
+		\item $\lato[\pcycl{\left<b, d, c, a\right>}][\allalts]$ (\laxiom{cycl})
+		\item $\lato[\prof'][\set{a, b}]$ (\laxiom{reinf}, 1, 2, 3, 4)
+		\item $\lato[4 \prof + \overline{4 \prof}][\allalts]$ (\laxiom{canc})
+		\item $\lato[4 \prof + \overline{4 \prof} + \prof'][\set{a, b}]$ (\laxiom{reinf}, 5, 6)
+		\item $\lato[\overline{4 \prof} + \prof'][\allalts]$ (\laxiom{canc})
+		\item $\lato[4 \prof][\set{a, b}]$ (\laxiom{reinf}, 7, 8)
+		\item $\lato[\prof][\set{a, b}]$ (\laxiom{reinf}, 9)
+	\end{enumerate}
+\end{frame}
+
+\section[General goal]{Goal: Build argumentative and adaptative recommender systems}
+\subsection{Disagreeing about Borda}
+\begin{frame}
+	\frametitle{Counter-argument against Borda}
+	
+	\begin{block}{Counter-argument against Borda?}
+		\pause
+		Not Condorcet-consistent!
+	\end{block}
+	\begin{example}
+		\begin{equation}
+			\prof =
+			\begin{array}{ccc}
+				a	&	b	&	b\\
+				d	&	c	&	a\\
+				c	&	a	&	c\\
+				b	&	d	&	d
+			\end{array}.
+		\end{equation}
+	\end{example}
+	\begin{itemize}
+		\item Argument against Borda: use a \laxiom{Cond} l-axiom
+		\item Then?
+		\pause
+		\item Counter-argue with \laxiom{FvsC}.
+	\end{itemize}
+\end{frame}
+
+\subsection{Argumentative systems}
+\begin{frame}
+	\frametitle{Building argumentative recommender systems}
+	
+	\begin{block}{General goal}
+		\begin{itemize}
+			\item Recommend complex objects
+			\item Recommend \emph{and} argue
+		\end{itemize}
+	\end{block}
+	\begin{block}{Complex objects}
+		\begin{itemize}
+			\item Voting rule
+			\item Planning
+			\item Strategy (game, negociation, …)
+			\item Travel itinerary
+		\end{itemize}
+	\end{block}
+	Multi-level argumentation:
+	\begin{itemize}
+		\item NOT persuasion
+		\item NOT predicting the natural user choice
+	\end{itemize}
+\end{frame}
+
+\subsection{Adaptive systems}
+\begin{frame}
+	\frametitle{Building adaptive recommender systems}
+	
+	\begin{block}{Role of preference models}
+		\begin{itemize}
+			\item Capture the alternatives to be recommended
+			\item Determine the best argumentation strategy
+		\end{itemize}
+	\end{block}
+%	\begin{itemize}
+%		\item Use machine learning approaches?
+%		\item Challenge: build databases!
+%	\end{itemize}
+\end{frame}
+
+\subsection{Conclusion}
+\begin{frame}
+	\frametitle{Conclusion}
+	
+	\begin{itemize}
+		\item A language to express desirable properties of voting rules.
+		\item We can then instanciate concrete arguments (example-based).
+		\item May render some arguments in the specialized literature accessible to non experts.
+		\item Extensions may permit to \emph{debate} about voting rules.
+		\item Provides a way to study appreciation of arguments.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[plain]
+	\addtocounter{framenumber}{-1}
+	\begin{center}
+		\huge
+		\textit{Thank you for your attention!}
+	\end{center}
+\end{frame}
+
+\appendix
+\AtBeginSection{
+}
+
+\begin{frame}[allowframebreaks]
+	\frametitle{Bibliography}
+	\def\newblock{\hskip .11em plus .33em minus .07em}
+ 	\bibliography{zotero}
+\end{frame}
+
+\end{document}
