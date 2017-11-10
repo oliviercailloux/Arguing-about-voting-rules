@@ -158,6 +158,7 @@
 %do not remove babel, which beamer uses (beamer uses the \translate command for the appendix); but french can be removed.
 \iftoggle{LCpres}{
 	\usepackage{appendixnumberbeamer}
+	\setbeamersize{text margin left=7mm, text margin right=7mm}
 	\setbeamertemplate{navigation symbols}{} 
 	\usepackage{preamble/beamerthemeParisFrance}
 	\usefonttheme{professionalfonts}
