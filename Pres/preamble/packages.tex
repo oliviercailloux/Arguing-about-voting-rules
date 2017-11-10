@@ -53,7 +53,8 @@
 \hypersetup{breaklinks, bookmarksopen}
 %add hyperfigures=true in hypersetup (already defined in article mode)
 \iftoggle{LCpres}{
-	\hypersetup{hyperfigures}
+	%citecolor: bugs with the closing ) or ]
+	\hypersetup{hyperfigures, colorlinks=true, citecolor=black, linkcolor=blue!70!red, urlcolor=blue}
 }{
 }
 
@@ -75,7 +76,7 @@
 \usepackage{siunitx} %[expproduct=tighttimes, decimalsymbol=comma] ou (plus récent ?) [round-mode=figures, round-precision=2, scientific-notation = engineering]
 \sisetup{detect-all, strict}% to detect e.g. when in math mode (use a math font) - check whether this makes sense with strict
 \usepackage{braket} %for \Set
-\usepackage{natbib}
+\usepackage[round]{natbib}
 \usepackage{doi}
 
 \usepackage{amsmath,amsthm}
