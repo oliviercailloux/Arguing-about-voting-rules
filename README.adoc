@@ -4,7 +4,7 @@ Documents and presentations related to the http://www.ifaamas.org/Proceedings/aa
 
 See also:
 
-* https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/pres-16-march-2016/Pres/arguing.pdf[Presentation]
+* https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/master/Pres/arguing.pdf[Presentation] (and a previous https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/pres-16-march-2016/Pres/arguing.pdf[version])
 * https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/master/Pres%20Ulle/endriss-aamas-2016-arguvote.pdf[Short pres]
 * https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/master/Pres%20internship/short.pdf[Very short pres]
 * https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/master/Poster/arguingposter.pdf[Poster]
