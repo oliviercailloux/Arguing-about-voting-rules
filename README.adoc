@@ -1,6 +1,6 @@
 = Arguing about Voting Rules
 
-Documents and presentations related to the http://www.ifaamas.org/Proceedings/aamas2016/pdfs/p287.pdf[article]: Olivier http://www.lamsade.dauphine.fr/~ocailloux/#publications[Cailloux] and Ulle https://staff.science.uva.nl/u.endriss/[Endriss]. 2016. “Arguing about Voting Rules”. In http://www.ifaamas.org/Proceedings/aamas2016/forms/contents.htm#SC1[Proceedings] of the 15th International Conference on Autonomous Agents and Multiagent Systems (AAMAS-2016), IFAAMAS.
+Documents and presentations related to the http://www.ifaamas.org/Proceedings/aamas2016/pdfs/p287.pdf[article]: Olivier http://www.lamsade.dauphine.fr/~ocailloux[Cailloux] and Ulle https://staff.science.uva.nl/u.endriss/[Endriss]. 2016. “Arguing about Voting Rules”. In http://www.ifaamas.org/Proceedings/aamas2016/forms/contents.htm#SC1[Proceedings] of the 15th International Conference on Autonomous Agents and Multiagent Systems (AAMAS-2016), IFAAMAS.
 
 See also:
 
@@ -8,4 +8,5 @@ See also:
 * https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/master/Pres%20Ulle/endriss-aamas-2016-arguvote.pdf[Short pres]
 * https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/master/Pres%20internship/short.pdf[Very short pres]
 * https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/master/Poster/arguingposter.pdf[Poster]
+* https://github.com/oliviercailloux/Arguing-about-voting-rules/raw/master/arguing.pdf[COMSOC-2016] version (featuring a more complete presentation of the algorithm, but omits some proofs)
 
